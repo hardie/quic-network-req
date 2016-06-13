@@ -378,7 +378,7 @@
 <link href="#rfc.section.2" rel="Chapter" title="2 Consent to Receive and Rate Limiting"/>
 <link href="#rfc.section.3" rel="Chapter" title="3 Long-lived Connections and HTTP Server Push"/>
 <link href="#rfc.section.4" rel="Chapter" title="4 QUIC Identification"/>
-<link href="#rfc.section.5" rel="Chapter" title="5 Endpoint State Loss"/>
+<link href="#rfc.section.5" rel="Chapter" title="5 Spurious QUIC Packets"/>
 <link href="#rfc.section.6" rel="Chapter" title="6 Network State Loss"/>
 <link href="#rfc.section.7" rel="Chapter" title="7 Network Diagnostics"/>
 <link href="#rfc.section.8" rel="Chapter" title="8 Security Considerations"/>
@@ -455,7 +455,7 @@
 <li>2.   <a href="#rfc.section.2">Consent to Receive and Rate Limiting</a></li>
 <li>3.   <a href="#rfc.section.3">Long-lived Connections and HTTP Server Push</a></li>
 <li>4.   <a href="#rfc.section.4">QUIC Identification</a></li>
-<li>5.   <a href="#rfc.section.5">Endpoint State Loss</a></li>
+<li>5.   <a href="#rfc.section.5">Spurious QUIC Packets</a></li>
 <li>6.   <a href="#rfc.section.6">Network State Loss</a></li>
 <li>7.   <a href="#rfc.section.7">Network Diagnostics</a></li>
 <li>8.   <a href="#rfc.section.8">Security Considerations</a></li>
@@ -493,7 +493,6 @@
 </dl>
 <h1 id="rfc.section.4"><a href="#rfc.section.4">4.</a> QUIC Identification</h1>
 <p id="rfc.section.4.p.1">The externally-visible QUIC version number is useful for future protocol agilty.  However, as this is visible to the network, it is likely to ossify around that value.  Thus, having something else to identify QUIC is useful, so that the version number can change while retaining the same identification of a QUIC packet.</p>
-<p id="rfc.section.4.p.2">When joining a new network with an existing QUIC session, the QUIC Version is not sent.  This reduces QUIC identification to heuristics which are fragile and will ossify around the first popular version of.  Without stronger QUIC identification, the other features described in this document cannot be attained.</p>
 <p/>
 
 <dl>
@@ -502,23 +501,32 @@
   <dt></dt>
   <dd style="margin-left: 8">Recommendation:  Have a network-hidden version number.</dd>
 </dl>
-<h1 id="rfc.section.5"><a href="#rfc.section.5">5.</a> Endpoint State Loss</h1>
-<p id="rfc.section.5.p.1">When an endpoint (client or server) loses state due to a reboot, or a host acquires a previously-active QUIC host's IP address, there may be spurious QUIC packets that arrives to a host.  The host might have a QUIC application listening on that socket, a non-QUIC application listening on that socket, or no application listening on that socket.  These are described below.</p>
-<p id="rfc.section.5.p.2">QUIC application listening: If the socket is expecting QUIC traffic and receives a spurious QUIC packet, the QUIC Connection ID will not match an existing Connection ID, and it should generate a QUIC reset packet.  The reset packet has to contain the full 64-bit Connection ID.  If the offending packet was using a truncated (compressed) Connect ID, the endpoint cannot generate a QUIC reset packet with the necessary 64-bit Connection ID (Sections 5.5 and 6.2.2 of <a href="#I-D.tsvwg-quic-protocol">[I-D.tsvwg-quic-protocol]</a>).</p>
+<h1 id="rfc.section.5"><a href="#rfc.section.5">5.</a> Spurious QUIC Packets</h1>
+<p id="rfc.section.5.p.1">A spurious packet may arrive when an endpoint (client or server):</p>
+<p/>
+
+<ul>
+  <li>loses state due to a reboot</li>
+  <li>QUIC application crash</li>
+  <li>acquires another host's prior IP address, or</li>
+  <li>a client makes a malicious or accidental connection attempt to a host.</li>
+</ul>
+<p id="rfc.section.5.p.3">In those cases, the host might have a QUIC application listening on that port, a non-QUIC application listening on that port, or no application listening on that port.  These are described below.</p>
+<p id="rfc.section.5.p.4">QUIC application listening: If the application is expecting QUIC traffic and receives a spurious QUIC packet, the QUIC Connection ID will not match an existing Connection ID, and it should notify the QUIC sender.  However, QUIC cannot notify the sender because it lacks the necessary cryptographic information and may lack the full Connection ID (if the spurious packet used a truncated Connection ID).</p>
 <p/>
 
 <dl>
   <dt></dt>
-  <dd style="margin-left: 8">Recommendation:  QUIC should honor a QUIC reset matching the (inverted) 5-tuple of the remote peer and its recently-sent Connection ID.</dd>
+  <dd style="margin-left: 8">Recommendation:  QUIC should have a mechanism for a QUIC application to send a hint to the remote system that its packet was not processed.</dd>
 </dl>
-<p id="rfc.section.5.p.4">Non-QUIC application listening: If the socket is not a QUIC application, it will not expect to receive a QUIC packet.  Upon receiving a QUIC packet, that application will either ignore not generate a response or will generate a response appropriate for that application (perhaps "unable to parse" or some similar response).  If the application does generate a response it will be received by the QUIC sender, the QUIC Connection ID of that response will not match an existing Connection ID, and non-QUIC packet will be dropped by QUIC.</p>
+<p id="rfc.section.5.p.6">Non-QUIC application listening: A non-QUIC application will not expect to receive a QUIC packet.  Upon receiving a QUIC packet, that application will either ignore not generate a response or will generate a response appropriate for that application (perhaps "unable to parse" or some similar response).  If the application does generate a response it will be received by the QUIC sender, the QUIC Connection ID of that response will not match an existing Connection ID, and non-QUIC packet will be dropped by QUIC.</p>
 <p/>
 
 <dl>
   <dt></dt>
-  <dd style="margin-left: 8">Recommendation:  no change.</dd>
+  <dd style="margin-left: 8">Recommendation: Evalaute if receiving unsolicited QUIC packets causes new problems for existing UDP applications.</dd>
 </dl>
-<p id="rfc.section.5.p.6">No application listening: If there is no process listening on that UDP socket, the host will generate an ICMP or ICMP6 error (destination unreachable, port unreachable).  Most operating systems allow non-privileged applications to receive and parse ICMP errors, allowing the QUIC stack to validate the returned ICMP error <a href="#ICMPTest">[ICMPTest]</a>.</p>
+<p id="rfc.section.5.p.8">No application listening: If there is no process listening on that UDP socket, the host will generate an ICMP or ICMP6 error (destination unreachable, port unreachable).  Most operating systems allow non-privileged applications to receive and parse ICMP errors, allowing the QUIC stack to validate the returned ICMP error <a href="#ICMPTest">[ICMPTest]</a>.</p>
 <p/>
 
 <dl>

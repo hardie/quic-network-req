@@ -147,41 +147,44 @@ QUIC packet.</t>
 </list></t>
 </section>
 
-<section title="Endpoint State Loss">
-<t>When an endpoint (client or server) loses state due to a reboot, or a
-host acquires a previously-active QUIC host's IP address, there may be
-spurious QUIC packets that arrive at a host.  The host might have a 
-QUIC application listening on that socket, a non-QUIC application listening
-on that socket, or no application listening on that socket.  These
-are described below.</t>
+<section title="Spurious QUIC Packets">
+<t>A spurious packet may arrive when an endpoint (client or server):</t>
 
-<t>QUIC application listening: If the socket is expecting QUIC traffic
-and receives a spurious QUIC packet, the QUIC Connection ID will not
-match an existing Connection ID, and it should generate a QUIC reset
-packet.  The reset packet has to contain the full 64-bit Connection
-ID.  If the offending packet was using a truncated (compressed)
-Connect ID, the endpoint cannot generate a QUIC reset packet with the
-necessary 64-bit Connection ID (Sections 5.5 and 6.2.2
-of <xref target="I-D.tsvwg-quic-protocol"></xref>).</t>
-
-<t><list style="hanging">
-<t>Recommendation:  QUIC should honor a QUIC reset matching the
-(inverted) 5-tuple of the remote peer and its recently-sent Connection
-ID.</t>
+<t><list style="symbols">
+<t>loses state due to a reboot</t>
+<t>QUIC application crash</t>
+<t>acquires another host's prior IP address, or</t>
+<t>a client makes a malicious or accidental connection attempt to a host.</t>
 </list></t>
 
-<t>Non-QUIC application listening: If the socket is not a QUIC
-application, it will not expect to receive a QUIC packet.  Upon
-receiving a QUIC packet, that application will either ignore not
-generate a response or will generate a response appropriate for that
-application (perhaps "unable to parse" or some similar response).  If
-the application does generate a response it will be received by the
-QUIC sender, the QUIC Connection ID of that response will not match an
-existing Connection ID, and non-QUIC packet will be dropped by
-QUIC.</t>
+<t>In those cases, the host might have a QUIC application listening on
+that port, a non-QUIC application listening on that port, or no
+application listening on that port.  These are described below.</t>
+
+<t>QUIC application listening: If the application is expecting QUIC
+traffic and receives a spurious QUIC packet, the QUIC Connection ID
+will not match an existing Connection ID, and it should notify the
+QUIC sender.  However, QUIC cannot notify the sender because it lacks
+the necessary cryptographic information and may lack the full
+Connection ID (if the spurious packet used a truncated Connection ID).</t>
 
 <t><list style="hanging">
-<t>Recommendation:  no change.</t>
+<t>Recommendation:  QUIC should have a mechanism for a QUIC application
+to send a hint to the remote system that its packet was not processed.</t>
+</list></t>
+
+<t>Non-QUIC application listening: A non-QUIC application will not
+expect to receive a QUIC packet.  Upon receiving a QUIC packet, that
+application will either ignore not generate a response or will
+generate a response appropriate for that application (perhaps "unable
+to parse" or some similar response).  If the application does generate
+a response it will be received by the QUIC sender, the QUIC Connection
+ID of that response will not match an existing Connection ID, and
+non-QUIC packet will be dropped by QUIC.</t>
+
+<t><list style="hanging">
+<t>Recommendation: Evalaute if receiving unsolicited QUIC packets
+causes new problems for existing UDP applications.</t>
 </list></t>
 
 <t>No application listening: If there is no process listening on that

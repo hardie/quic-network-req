@@ -64,10 +64,10 @@ Table of Contents
    2.  Consent to Receive and Rate Limiting  . . . . . . . . . . . .   2
    3.  Long-lived Connections and HTTP Server Push . . . . . . . . .   3
    4.  QUIC Identification . . . . . . . . . . . . . . . . . . . . .   4
-   5.  Endpoint State Loss . . . . . . . . . . . . . . . . . . . . .   4
+   5.  Spurious QUIC Packets . . . . . . . . . . . . . . . . . . . .   4
    6.  Network State Loss  . . . . . . . . . . . . . . . . . . . . .   5
    7.  Network Diagnostics . . . . . . . . . . . . . . . . . . . . .   5
-   8.  Security Considerations . . . . . . . . . . . . . . . . . . .   5
+   8.  Security Considerations . . . . . . . . . . . . . . . . . . .   6
    9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
    10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   6
      10.1.  Normative References . . . . . . . . . . . . . . . . . .   6
@@ -178,46 +178,46 @@ Internet-Draft        Network Requirements for QUIC            June 2016
    identify QUIC is useful, so that the version number can change while
    retaining the same identification of a QUIC packet.
 
-   When joining a new network with an existing QUIC session, the QUIC
-   Version is not sent.  This reduces QUIC identification to heuristics
-   which are fragile and will ossify around the first popular version
-   of.  Without stronger QUIC identification, the other features
-   described in this document cannot be attained.
-
       Recommendation: Provide network-visible mechanism to identify a
       QUIC packet.
 
       Recommendation: Have a network-hidden version number.
 
-5.  Endpoint State Loss
+5.  Spurious QUIC Packets
 
-   When an endpoint (client or server) loses state due to a reboot, or a
-   host acquires a previously-active QUIC host's IP address, there may
-   be spurious QUIC packets that arrives to a host.  The host might have
-   a QUIC application listening on that socket, a non-QUIC application
-   listening on that socket, or no application listening on that socket.
-   These are described below.
+   A spurious packet may arrive when an endpoint (client or server):
 
-   QUIC application listening: If the socket is expecting QUIC traffic
-   and receives a spurious QUIC packet, the QUIC Connection ID will not
-   match an existing Connection ID, and it should generate a QUIC reset
-   packet.  The reset packet has to contain the full 64-bit Connection
-   ID.  If the offending packet was using a truncated (compressed)
-   Connect ID, the endpoint cannot generate a QUIC reset packet with the
-   necessary 64-bit Connection ID (Sections 5.5 and 6.2.2 of
-   [I-D.tsvwg-quic-protocol]).
+   o  loses state due to a reboot
 
-      Recommendation: QUIC should honor a QUIC reset matching the
-      (inverted) 5-tuple of the remote peer and its recently-sent
-      Connection ID.
+   o  QUIC application crash
 
-   Non-QUIC application listening: If the socket is not a QUIC
-   application, it will not expect to receive a QUIC packet.  Upon
-   receiving a QUIC packet, that application will either ignore not
-   generate a response or will generate a response appropriate for that
-   application (perhaps "unable to parse" or some similar response).  If
-   the application does generate a response it will be received by the
-   QUIC sender, the QUIC Connection ID of that response will not match
+   o  acquires another host's prior IP address, or
+
+   o  a client makes a malicious or accidental connection attempt to a
+      host.
+
+   In those cases, the host might have a QUIC application listening on
+   that port, a non-QUIC application listening on that port, or no
+   application listening on that port.  These are described below.
+
+   QUIC application listening: If the application is expecting QUIC
+   traffic and receives a spurious QUIC packet, the QUIC Connection ID
+   will not match an existing Connection ID, and it should notify the
+   QUIC sender.  However, QUIC cannot notify the sender because it lacks
+   the necessary cryptographic information and may lack the full
+   Connection ID (if the spurious packet used a truncated Connection
+   ID).
+
+      Recommendation: QUIC should have a mechanism for a QUIC
+      application to send a hint to the remote system that its packet
+      was not processed.
+
+   Non-QUIC application listening: A non-QUIC application will not
+   expect to receive a QUIC packet.  Upon receiving a QUIC packet, that
+   application will either ignore not generate a response or will
+   generate a response appropriate for that application (perhaps "unable
+   to parse" or some similar response).  If the application does
+   generate a response it will be received by the QUIC sender, the QUIC
 
 
 
@@ -226,10 +226,11 @@ Wing                    Expires December 15, 2016               [Page 4]
 Internet-Draft        Network Requirements for QUIC            June 2016
 
 
-   an existing Connection ID, and non-QUIC packet will be dropped by
-   QUIC.
+   Connection ID of that response will not match an existing Connection
+   ID, and non-QUIC packet will be dropped by QUIC.
 
-      Recommendation: no change.
+      Recommendation: Evalaute if receiving unsolicited QUIC packets
+      causes new problems for existing UDP applications.
 
    No application listening: If there is no process listening on that
    UDP socket, the host will generate an ICMP or ICMP6 error
@@ -269,11 +270,10 @@ Internet-Draft        Network Requirements for QUIC            June 2016
    QUIC will encrypt the acknowledgement frames when QUIC adopts TLS
    1.3.)
 
-8.  Security Considerations
 
-   This document describes how QUIC needs to be distinguished from non-
-   QUIC UDP traffic, so networks can defend themselves from attack and
-   networks can defend hosts from attack.
+
+
+
 
 
 
@@ -281,6 +281,12 @@ Wing                    Expires December 15, 2016               [Page 5]
 
 Internet-Draft        Network Requirements for QUIC            June 2016
 
+
+8.  Security Considerations
+
+   This document describes how QUIC needs to be distinguished from non-
+   QUIC UDP traffic, so networks can defend themselves from attack and
+   networks can defend hosts from attack.
 
 9.  IANA Considerations
 
@@ -325,18 +331,17 @@ Internet-Draft        Network Requirements for QUIC            June 2016
               Applications", STD 64, RFC 3550, DOI 10.17487/RFC3550,
               July 2003, <http://www.rfc-editor.org/info/rfc3550>.
 
-   [RFC3711]  Baugher, M., McGrew, D., Naslund, M., Carrara, E., and K.
-              Norrman, "The Secure Real-time Transport Protocol (SRTP)",
-              RFC 3711, DOI 10.17487/RFC3711, March 2004,
-              <http://www.rfc-editor.org/info/rfc3711>.
-
-
 
 
 Wing                    Expires December 15, 2016               [Page 6]
 
 Internet-Draft        Network Requirements for QUIC            June 2016
 
+
+   [RFC3711]  Baugher, M., McGrew, D., Naslund, M., Carrara, E., and K.
+              Norrman, "The Secure Real-time Transport Protocol (SRTP)",
+              RFC 3711, DOI 10.17487/RFC3711, March 2004,
+              <http://www.rfc-editor.org/info/rfc3711>.
 
    [RFC4787]  Audet, F., Ed. and C. Jennings, "Network Address
               Translation (NAT) Behavioral Requirements for Unicast
@@ -372,11 +377,6 @@ Author's Address
    USA
 
    Email: dwing@cisco.com
-
-
-
-
-
 
 
 
