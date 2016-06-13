@@ -14,10 +14,10 @@ Expires: December 15, 2016                                 June 13, 2016
 Abstract
 
    As QUIC is deployed in more networks, some existing network path
-   security infrastructure will need to be updated.  This document
-   describes a few ways QUIC might be modifified to make these updates
-   possible and palatable to the developers and operators that will need
-   to make the changes.
+   infrastructure will need to be updated.  This document describes a
+   few ways QUIC might be modifified to make these updates possible and
+   palatable to the developers and operators that will need to make the
+   changes.
 
 Status of This Memo
 

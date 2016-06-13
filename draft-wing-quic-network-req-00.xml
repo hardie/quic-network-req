@@ -39,7 +39,7 @@
     <workgroup>QUIC</workgroup>
 
     <abstract>
-      <t>As QUIC is deployed in more networks, some existing network path security
+      <t>As QUIC is deployed in more networks, some existing network path
         infrastructure will need to be updated.  This document describes a
         few ways QUIC might be modifified to make these updates possible
         and palatable to the developers and operators that will need to make
