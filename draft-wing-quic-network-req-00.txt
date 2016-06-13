@@ -67,7 +67,7 @@ Table of Contents
    5.  Spurious QUIC Packets . . . . . . . . . . . . . . . . . . . .   4
    6.  Network State Loss  . . . . . . . . . . . . . . . . . . . . .   5
    7.  Network Diagnostics . . . . . . . . . . . . . . . . . . . . .   5
-   8.  Security Considerations . . . . . . . . . . . . . . . . . . .   6
+   8.  Security Considerations . . . . . . . . . . . . . . . . . . .   5
    9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
    10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   6
      10.1.  Normative References . . . . . . . . . . . . . . . . . .   6
@@ -189,12 +189,11 @@ Internet-Draft        Network Requirements for QUIC            June 2016
 
    o  loses state due to a reboot
 
-   o  QUIC application crash
+   o  experiences a QUIC application crash
 
-   o  acquires another host's prior IP address, or
+   o  acquires another host's prior IP address
 
-   o  a client makes a malicious or accidental connection attempt to a
-      host.
+   o  receives a malicious or accidental QUIC packet.
 
    In those cases, the host might have a QUIC application listening on
    that port, a non-QUIC application listening on that port, or no
@@ -213,11 +212,12 @@ Internet-Draft        Network Requirements for QUIC            June 2016
       was not processed.
 
    Non-QUIC application listening: A non-QUIC application will not
-   expect to receive a QUIC packet.  Upon receiving a QUIC packet, that
-   application will either ignore not generate a response or will
-   generate a response appropriate for that application (perhaps "unable
-   to parse" or some similar response).  If the application does
-   generate a response it will be received by the QUIC sender, the QUIC
+   expect to receive a QUIC packet.  Upon receiving a QUIC packet, the
+   application will attempt to parse the packet.  If the application
+   generates a response, it will not match the QUIC Connection ID of the
+   sender, and will be dropped by the QUIC sender.  It is unknown if
+   receiving unsolicited QUIC packets causes problems for commonly-
+   deployed UDP applications.
 
 
 
@@ -226,34 +226,30 @@ Wing                    Expires December 15, 2016               [Page 4]
 Internet-Draft        Network Requirements for QUIC            June 2016
 
 
-   Connection ID of that response will not match an existing Connection
-   ID, and non-QUIC packet will be dropped by QUIC.
-
       Recommendation: Evalaute if receiving unsolicited QUIC packets
-      causes new problems for existing UDP applications.
+      causes new problems for existing UDP clients or UDP servers.
 
    No application listening: If there is no process listening on that
-   UDP socket, the host will generate an ICMP or ICMP6 error
-   (destination unreachable, port unreachable).  Most operating systems
-   allow non-privileged applications to receive and parse ICMP errors,
-   allowing the QUIC stack to validate the returned ICMP error
-   [ICMPTest].
+   UDP port, the host will generate an ICMP or ICMP6 error (destination
+   unreachable, port unreachable).  Most operating systems allow non-
+   privileged applications to receive and parse ICMP errors, allowing
+   the QUIC stack to validate the returned ICMP error [ICMPTest].
 
-      Recommendation: QUIC should honor an ICMP hard error matching the
-      5-tuple of the remote peer and its recently-sent Connection ID, in
-      a fashion similar to TCP's handling of ICMP hard errors (Section 4
-      of [RFC5927]).
+      Recommendation: QUIC applications should honor an ICMP hard error
+      matching the 5-tuple of the remote peer and its recently-sent
+      Connection ID, in a fashion similar to TCP's handling of ICMP hard
+      errors (Section 4 of [RFC5927]).
 
 6.  Network State Loss
 
-   If firewall or NAT discards mapping state (due to inactivity or other
-   reason), it is beneficial for the fireall or NAT to signal the
-   endpoint the mapping is destroyed.
+   If a firewall, NAT, or load balancer discards its mapping state
+   without notifying the endpoint, the endpoint can take a long time to
+   discover the network state has been lost.  To avoid this delay, it is
+   desirable to send a signal that the network state will be lost or has
+   been lost.
 
-   Recommendation: QUIC should provide a way for on-path middleboxes to
-   signal that the QUIC mapping has been destroyed, so that if the QUIC
-   endpoint did not want it destroyed, the QUIC endpoint can attempt to
-   re-establish the connection.
+      Recommendation: QUIC should provide a way for on-path middleboxes
+      to signal that their mapping will be lost or has been lost.
 
 7.  Network Diagnostics
 
@@ -265,12 +261,16 @@ Internet-Draft        Network Requirements for QUIC            June 2016
    (S)RTP and (S)RTCP headers to the network to aid troubleshooting and
    diagnostics.
 
-   Recommendation: QUIC expose acknowledgement frames to the network to
-   aid diagnosting packet loss and delay.  (It is currently unclear if
-   QUIC will encrypt the acknowledgement frames when QUIC adopts TLS
-   1.3.)
+      Recommendation: QUIC expose acknowledgement frames to the network
+      to aid diagnosting packet loss and delay.  (It is currently
+      unclear if QUIC will encrypt the acknowledgement frames when QUIC
+      adopts TLS 1.3.)
 
+8.  Security Considerations
 
+   This document describes how QUIC needs to be distinguished from non-
+   QUIC UDP traffic, so networks can defend themselves from attack and
+   networks can defend hosts from attack.
 
 
 
@@ -281,12 +281,6 @@ Wing                    Expires December 15, 2016               [Page 5]
 
 Internet-Draft        Network Requirements for QUIC            June 2016
 
-
-8.  Security Considerations
-
-   This document describes how QUIC needs to be distinguished from non-
-   QUIC UDP traffic, so networks can defend themselves from attack and
-   networks can defend hosts from attack.
 
 9.  IANA Considerations
 
@@ -331,17 +325,18 @@ Internet-Draft        Network Requirements for QUIC            June 2016
               Applications", STD 64, RFC 3550, DOI 10.17487/RFC3550,
               July 2003, <http://www.rfc-editor.org/info/rfc3550>.
 
+   [RFC3711]  Baugher, M., McGrew, D., Naslund, M., Carrara, E., and K.
+              Norrman, "The Secure Real-time Transport Protocol (SRTP)",
+              RFC 3711, DOI 10.17487/RFC3711, March 2004,
+              <http://www.rfc-editor.org/info/rfc3711>.
+
+
 
 
 Wing                    Expires December 15, 2016               [Page 6]
 
 Internet-Draft        Network Requirements for QUIC            June 2016
 
-
-   [RFC3711]  Baugher, M., McGrew, D., Naslund, M., Carrara, E., and K.
-              Norrman, "The Secure Real-time Transport Protocol (SRTP)",
-              RFC 3711, DOI 10.17487/RFC3711, March 2004,
-              <http://www.rfc-editor.org/info/rfc3711>.
 
    [RFC4787]  Audet, F., Ed. and C. Jennings, "Network Address
               Translation (NAT) Behavioral Requirements for Unicast
@@ -377,6 +372,11 @@ Author's Address
    USA
 
    Email: dwing@cisco.com
+
+
+
+
+
 
 
 

@@ -149,12 +149,11 @@ QUIC packet.</t>
 
 <section title="Spurious QUIC Packets">
 <t>A spurious packet may arrive when an endpoint (client or server):</t>
-
 <t><list style="symbols">
 <t>loses state due to a reboot</t>
-<t>QUIC application crash</t>
-<t>acquires another host's prior IP address, or</t>
-<t>a client makes a malicious or accidental connection attempt to a host.</t>
+<t>experiences a QUIC application crash</t>
+<t>acquires another host's prior IP address</t>
+<t>receives a malicious or accidental QUIC packet.</t>
 </list></t>
 
 <t>In those cases, the host might have a QUIC application listening on
@@ -174,46 +173,48 @@ to send a hint to the remote system that its packet was not processed.</t>
 </list></t>
 
 <t>Non-QUIC application listening: A non-QUIC application will not
-expect to receive a QUIC packet.  Upon receiving a QUIC packet, that
-application will either ignore not generate a response or will
-generate a response appropriate for that application (perhaps "unable
-to parse" or some similar response).  If the application does generate
-a response it will be received by the QUIC sender, the QUIC Connection
-ID of that response will not match an existing Connection ID, and
-non-QUIC packet will be dropped by QUIC.</t>
+expect to receive a QUIC packet.  Upon receiving a QUIC packet, the
+application will attempt to parse the packet.  If the application 
+generates a response, it will not match the QUIC Connection ID of
+the sender, and will be dropped by the QUIC sender.  It is unknown
+if receiving unsolicited QUIC packets causes problems for commonly-
+deployed UDP applications.</t>
 
 <t><list style="hanging">
 <t>Recommendation: Evalaute if receiving unsolicited QUIC packets
-causes new problems for existing UDP applications.</t>
+causes new problems for existing UDP clients or UDP servers.</t>
 </list></t>
 
 <t>No application listening: If there is no process listening on that
-UDP socket, the host will generate an ICMP or ICMP6 error (destination
+UDP port, the host will generate an ICMP or ICMP6 error (destination
 unreachable, port unreachable).  Most operating systems allow
 non-privileged applications to receive and parse ICMP errors, allowing
 the QUIC stack to validate the returned ICMP
 error <xref target="ICMPTest"></xref>.</t>
 
 <t><list style="hanging">
-<t>Recommendation:  QUIC should honor an ICMP hard error matching the
-5-tuple of the remote peer and its recently-sent Connection ID, in a
-fashion similar to TCP's handling of ICMP hard errors (Section 4 of 
+<t>Recommendation: QUIC applications should honor an ICMP hard error
+matching the 5-tuple of the remote peer and its recently-sent
+Connection ID, in a fashion similar to TCP's handling of ICMP hard
+errors (Section 4 of
 <xref target="RFC5927"></xref>).</t>
 </list></t>
 </section>
 
 <section title="Network State Loss">
-<t>If firewall or NAT discards mapping state (due to inactivity or
-other reason), it is beneficial for the fireall or NAT to signal the
-endpoint the mapping is destroyed.</t>
+<t>If a firewall, NAT, or load balancer discards its mapping state
+without notifying the endpoint, the endpoint can take a long time to
+discover the network state has been lost.  To avoid this delay, it is
+desirable to send a signal that the network state will be lost or
+has been lost.</t>
+
+<t><list style="hanging">
 <t>Recommendation:  QUIC should provide a way for on-path middleboxes to
-signal that the QUIC mapping has been destroyed, so that if the QUIC endpoint
-did not want it destroyed, the QUIC endpoint can attempt to re-establish
-the connection.</t>
+signal that their mapping will be lost or has been lost.</t>
+</list></t>
 </section>
 
 <section title="Network Diagnostics">
-
 <t>With TCP, packet loss and round-trip times can be observed by
 examining sequence and ACK numbers.  This is useful to diagnose where
 queues have formed on networks and to identify packets that were never
@@ -222,10 +223,12 @@ RTP (<xref target="RFC3711">SRTP</xref>) were also designed to expose
 that information in their (S)RTP and (S)RTCP headers to the network to
 aid troubleshooting and diagnostics.</t>
 
+<t><list style="hanging">
 <t>Recommendation:  QUIC expose acknowledgement frames to the network
 to aid diagnosting packet loss and delay.  (It is currently unclear
 if QUIC will encrypt the acknowledgement frames when QUIC adopts
 TLS 1.3.)</t>
+</list></t>
 </section>
 
 
