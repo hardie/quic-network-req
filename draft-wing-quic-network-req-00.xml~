@@ -119,7 +119,7 @@ perfect solution.  Note that heuristic NAT / firewall beahavior
 discovery is tempting, but imperfect <xref target="RFC5780"></xref>,
 leaving QUIC with needing to send occasional keepalivers as the best
 assurance against mapping destruction (Section 8.10 of
-<xref target="I-D.tsvwg-quic-protocol"></xref>).</t>
+<xref target="I-D.tsvwg-quic-prototol"></xref>).</t>
 
 <t><list style="hanging">
 <t>Recommendation:  Provide network-visible QUIC identifier so
