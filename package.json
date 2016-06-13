@@ -1,0 +1,27 @@
+{
+  "name": "quic-network-req",
+  "version": "1.0.0",
+  "description": "Network Requirements for QUIC",
+  "scripts": {
+    "clean": "rm -rf *.html *.txt",
+    "xml2rfc": "xml2rfc --text --html *.xml",
+    "watch": "watch-run -i -p '*.xml' 'npm run xml2rfc'",
+    "live": "live-server --port=4443 --open= *.html",
+    "dev": "npm-run-all -p --silent watch live"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hildjj/quic-network-req.git"
+  },
+  "author": "Dan Wing <dwing@cisco.com>",
+  "license": "SEE LICENSE IN http://trustee.ietf.org/docs/IETF-Trust-License-Policy.pdf",
+  "bugs": {
+    "url": "https://github.com/danwing/quic-network-req/issues"
+  },
+  "homepage": "https://github.com/danwing/quic-network-req#readme",
+  "devDependencies": {
+    "live-server": "latest",
+    "npm-run-all": "latest",
+    "watch-run": "latest"
+  }
+}
