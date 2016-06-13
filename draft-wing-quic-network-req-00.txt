@@ -3,18 +3,21 @@
 
 
 QUIC                                                             D. Wing
-Internet-Draft                                                     Cisco
-Intended status: Standards Track                           June 13, 2016
-Expires: December 15, 2016
+Internet-Draft                                             J. Hildebrand
+Intended status: Standards Track                                   Cisco
+Expires: December 15, 2016                                 June 13, 2016
 
 
-                     Network Requirements for QUIC
+                   Network Path Requirements for QUIC
                      draft-wing-quic-network-req-00
 
 Abstract
 
-   Identifying QUIC traffic benefits both QUIC and network security, as
-   described by this document.
+   As QUIC is deployed in more networks, some existing network path
+   infrastructure will need to be updated.  This document describes a
+   few ways QUIC might be modifified to make these updates possible and
+   palatable to the developers and operators that will need to make the
+   changes.
 
 Status of This Memo
 
@@ -50,12 +53,9 @@ Copyright Notice
 
 
 
-
-
-
-Wing                    Expires December 15, 2016               [Page 1]
+Wing & Hildebrand       Expires December 15, 2016               [Page 1]
 
-Internet-Draft        Network Requirements for QUIC            June 2016
+Internet-Draft     Network Path Requirements for QUIC          June 2016
 
 
 Table of Contents
@@ -63,15 +63,15 @@ Table of Contents
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
    2.  Consent to Receive and Rate Limiting  . . . . . . . . . . . .   2
    3.  Long-lived Connections and HTTP Server Push . . . . . . . . .   3
-   4.  QUIC Identification . . . . . . . . . . . . . . . . . . . . .   4
-   5.  Spurious QUIC Packets . . . . . . . . . . . . . . . . . . . .   4
-   6.  Network State Loss  . . . . . . . . . . . . . . . . . . . . .   5
+   4.  Identification  . . . . . . . . . . . . . . . . . . . . . . .   4
+   5.  Spurious Packets  . . . . . . . . . . . . . . . . . . . . . .   4
+   6.  Path State Loss . . . . . . . . . . . . . . . . . . . . . . .   5
    7.  Security Considerations . . . . . . . . . . . . . . . . . . .   5
-   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   5
+   8.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
    9.  References  . . . . . . . . . . . . . . . . . . . . . . . . .   6
      9.1.  Normative References  . . . . . . . . . . . . . . . . . .   6
      9.2.  Informative References  . . . . . . . . . . . . . . . . .   6
-   Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   7
+   Authors' Addresses  . . . . . . . . . . . . . . . . . . . . . . .   7
 
 1.  Introduction
 
@@ -81,52 +81,56 @@ Table of Contents
    avoid this ossification with QUIC.  At the same time, there is a
    desire to treat QUIC better than normal UDP traffic; that is, to
    treat QUIC as well as TCP traffic.  Unfortunately, the lack of header
-   information in QUIC prevents the network from identifying QUIC
-   traffic and prevents the network from treating QUIC as a transport
+   information in QUIC prevents the network path from identifying QUIC
+   traffic and prevents the path from treating QUIC as a transport
    protocol on par with TCP.
+
+   Although it might be possible for path elements to heuristically
+   perform their traditional roles, explictly making the path a part of
+   the QUIC architecture will generate a superior user experience.  Note
+   that the information required to be exposed is *less* than TCP
+   exposes, in order to enable future QUIC extensibility.
 
    This paper assumes that QUIC will use TLS 1.3 and that QUIC will not
    perform TLS session resumption when switching interfaces.
 
 2.  Consent to Receive and Rate Limiting
 
-   Unlike UDP, TCP has a clear consent-to-receive indicator, which is
-   why TCP does not suffer from rate-limits on those same networks.  For
-   TCP, the network can observe the consent to receive by patching
-   acknowledgement numbers with their associated sequence numbers.
-   WebRTC's data channel runs over UDP and has network-observable
-   Consent Freshness [RFC7675] packets.  Multipath TCP (MPTCP [RFC6824])
-   sends its acknowledgements on the (reverse) path of the data, which
-   provides a clear consent-to-receive indicator to the network.
-
-   However, QUIC does not provide consent information visible to the
-   network, and QUIC is silent if its own acknowledgements would be sent
-   on the (reverse) path of the data.  Without this visibility, QUIC
-   traffic that a host wants to receive cannot be distinguished from
-   attack traffic.
-
-
-
-
-
-Wing                    Expires December 15, 2016               [Page 2]
-
-Internet-Draft        Network Requirements for QUIC            June 2016
-
-
-   On many networks UDP is rate-limited or completely blocked.  This
-   rate limit is applied per host or applied per link.  The limits are
-   imposed to prevent compromised hosts from generating high volumes of
-   UDP traffic towards a victim [I-D.byrne-opsec-udp-advisory].  Some
-   protocols are request/response and could have higher rate limits
-   because consent is visible (e.g., DNS, NTP) but others are send-only
+   On many networks UDP is rate-limited or completely blocked, or a per-
+   host or per-link basis.  The limits are imposed to prevent
+   compromised hosts from generating high volumes of UDP traffic towards
+   a victim [I-D.byrne-opsec-udp-advisory].  Some protocols are request/
+   response and could have higher rate limits because consent to receive
+   is visible to the path (e.g., DNS, NTP) but others are send-only
    (e.g., SNMP traps, SYSLOG).  The configuration expense and fear of
    ossification involved in deeper packet inspection is not commesurate
    with the benefit of higher rate limits for those request/response
    protocols, so many networks simply rate limit or block UDP.
 
-      Recommendation: Provide network-visible consent request and
-      consent acknowledgement for a given 5-tuple.
+
+
+Wing & Hildebrand       Expires December 15, 2016               [Page 2]
+
+Internet-Draft     Network Path Requirements for QUIC          June 2016
+
+
+   Unlike UDP, TCP has a clear consent-to-receive indicator, which is
+   why TCP is not subjected to rate-limits on those same networks.  For
+   TCP, the path can observe the consent to receive by patching
+   acknowledgement numbers with their associated sequence numbers.
+   WebRTC's data channel runs over UDP and has path-observable Consent
+   Freshness [RFC7675] packets.  Multipath TCP (MPTCP [RFC6824]) sends
+   its acknowledgements on the (reverse) path of the data, which
+   provides a clear consent-to-receive indicator to the path.
+
+   However, QUIC does not provide consent information visible to the
+   path, and QUIC is silent if its own acknowledgements would be sent on
+   the (reverse) path of the data.  Without this visibility, QUIC
+   traffic that a host wants to receive cannot be distinguished from
+   attack traffic.
+
+      Recommendation: Provide path-visible consent request and consent
+      acknowledgement for a given 5-tuple.
 
 3.  Long-lived Connections and HTTP Server Push
 
@@ -144,46 +148,45 @@ Internet-Draft        Network Requirements for QUIC            June 2016
    However, if the mapping is destroyed and the server sends data first,
    the server's packets will be dropped by the firewall or NAT.  This
    problem can be mitigated by (a) the client identifying its long-lived
-   connections to the network (e.g., using PCP or UPnP IGD) or (b) by
-   using an easily-identified QUIC header so the network can hopefully
-   identify that header and apply a longer, TCP-like mapping.  Neither
-   is a perfect solution.  Note that heuristic NAT / firewall beahavior
+   connections to the path (e.g., using PCP or UPnP IGD) or (b) by using
+   an easily-identified QUIC header so the pat can hopefully identify
+   that header and apply a longer, TCP-like mapping.  Neither is a
+   perfect solution.  Note that heuristic NAT / firewall beahavior
    discovery is tempting, but imperfect [RFC5780], leaving QUIC with
-   needing to send occasional keepalivers as the best assurance against
-   mapping destruction (Section 8.10 of [I-D.tsvwg-quic-protocol]).
+   sending occasional keepalives as the best assurance against mapping
+   destruction (Section 8.10 of [I-D.tsvwg-quic-protocol]).
 
-   Experience with TCP is that network state needs to be retained after
+   Experience with TCP is that state needs to be retained after
    processing the initial session shutdown packet, to avoid half-closed
    sessions on the TCP endpoints.  Although QUIC's termination mechanism
    is simplier than TCP's, it is desirable to avoid causing half-closed
    sessions with QUIC.
 
-      Recommendation: QUIC's public reset facility needs to describe
-      timing recommendations for network state expiry.
 
 
 
-
-
-Wing                    Expires December 15, 2016               [Page 3]
+Wing & Hildebrand       Expires December 15, 2016               [Page 3]
 
-Internet-Draft        Network Requirements for QUIC            June 2016
+Internet-Draft     Network Path Requirements for QUIC          June 2016
 
 
-4.  QUIC Identification
+      Recommendation: QUIC's public reset facility needs to describe
+      timing recommendations for path state expiry.
+
+4.  Identification
 
    The externally-visible QUIC version number is useful for future
-   protocol agilty.  However, as this is visible to the network, it is
+   protocol agilty.  However, as this is visible to the path, it is
    likely to ossify around that value.  Thus, having something else to
    identify QUIC is useful, so that the version number can change while
    retaining the same identification of a QUIC packet.
 
-      Recommendation: Provide network-visible mechanism to identify a
-      QUIC packet.
+      Recommendation: Provide path-visible mechanism to identify a QUIC
+      packet.
 
-      Recommendation: Have a network-hidden version number.
+      Recommendation: Have a path-invisible version number.
 
-5.  Spurious QUIC Packets
+5.  Spurious Packets
 
    A spurious packet may arrive when an endpoint (client or server):
 
@@ -215,38 +218,40 @@ Internet-Draft        Network Requirements for QUIC            June 2016
    expect to receive a QUIC packet.  Upon receiving a QUIC packet, the
    application will attempt to parse the packet.  If the application
    generates a response, it will not match the QUIC Connection ID of the
+
+
+
+Wing & Hildebrand       Expires December 15, 2016               [Page 4]
+
+Internet-Draft     Network Path Requirements for QUIC          June 2016
+
+
    sender, and will be dropped by the QUIC sender.  It is unknown if
    receiving unsolicited QUIC packets causes problems for commonly-
    deployed UDP applications.
-
-
-
-Wing                    Expires December 15, 2016               [Page 4]
-
-Internet-Draft        Network Requirements for QUIC            June 2016
-
 
       Recommendation: Evalaute if receiving unsolicited QUIC packets
       causes new problems for existing UDP clients or UDP servers.
 
    No application listening: If there is no process listening on that
    UDP port, the host will generate an ICMP or ICMP6 error (destination
-   unreachable, port unreachable).  Most operating systems allow non-
-   privileged applications to receive and parse ICMP errors, allowing
-   the QUIC stack to validate the returned ICMP error [ICMPTest].
+   unreachable, port unreachable), or due to policy reasons may not
+   react at all.  Most operating systems allow non-privileged
+   applications to receive and parse ICMP errors, allowing the QUIC
+   stack to validate the returned ICMP error [ICMPTest].
 
       Recommendation: QUIC applications should honor an ICMP hard error
       matching the 5-tuple of the remote peer and its recently-sent
       Connection ID, in a fashion similar to TCP's handling of ICMP hard
       errors (Section 4 of [RFC5927]).
 
-6.  Network State Loss
+6.  Path State Loss
 
    If a firewall, NAT, or load balancer discards its mapping state
    without notifying the endpoint, both endpoints can take a long time
-   to discover the network state has been lost.  To avoid this delay, it
-   is desirable to send a signal that the network state will be lost or
-   has been lost.
+   to discover the path state has been lost.  To avoid this delay, it is
+   desirable to send a signal that the path state will be lost or has
+   been lost.
 
       Recommendation: QUIC should provide a way for on-path middleboxes
       to signal that their mapping will be lost or has been lost.
@@ -263,24 +268,23 @@ Internet-Draft        Network Requirements for QUIC            June 2016
    o  Examine impact of CORS [CORS] to generate new UDP attacks against
       both clients and servers.
 
-   o  Due to TCP attacks, initial sequence numbers are now randomized.
-      QUIC should be analyzed if it would similarly benefit from
-      randomized initial sequence numbers.
+   o  Due to TCP attacks, TCP initial sequence numbers are now
+      randomized.  QUIC should be analyzed if it would similarly benefit
+      from randomized initial sequence numbers.
+
+
+
+
+
+
+Wing & Hildebrand       Expires December 15, 2016               [Page 5]
+
+Internet-Draft     Network Path Requirements for QUIC          June 2016
+
 
 8.  IANA Considerations
 
    None.
-
-
-
-
-
-
-
-Wing                    Expires December 15, 2016               [Page 5]
-
-Internet-Draft        Network Requirements for QUIC            June 2016
-
 
 9.  References
 
@@ -292,8 +296,8 @@ Internet-Draft        Network Requirements for QUIC            June 2016
               draft-tsvwg-quic-protocol-02 (work in progress), January
               2016.
 
-   [RFC5927]  Gont, F., "ICMP Attacks against TCP", RFC 5927, DOI
-              10.17487/RFC5927, July 2010,
+   [RFC5927]  Gont, F., "ICMP Attacks against TCP", RFC 5927,
+              DOI 10.17487/RFC5927, July 2010,
               <http://www.rfc-editor.org/info/rfc5927>.
 
 9.2.  Informative References
@@ -324,19 +328,20 @@ Internet-Draft        Network Requirements for QUIC            June 2016
               UDP", BCP 127, RFC 4787, DOI 10.17487/RFC4787, January
               2007, <http://www.rfc-editor.org/info/rfc4787>.
 
-   [RFC5780]  MacDonald, D. and B. Lowekamp, "NAT Behavior Discovery
-              Using Session Traversal Utilities for NAT (STUN)", RFC
-              5780, DOI 10.17487/RFC5780, May 2010,
-              <http://www.rfc-editor.org/info/rfc5780>.
 
 
 
 
 
-Wing                    Expires December 15, 2016               [Page 6]
+Wing & Hildebrand       Expires December 15, 2016               [Page 6]
 
-Internet-Draft        Network Requirements for QUIC            June 2016
+Internet-Draft     Network Path Requirements for QUIC          June 2016
 
+
+   [RFC5780]  MacDonald, D. and B. Lowekamp, "NAT Behavior Discovery
+              Using Session Traversal Utilities for NAT (STUN)",
+              RFC 5780, DOI 10.17487/RFC5780, May 2010,
+              <http://www.rfc-editor.org/info/rfc5780>.
 
    [RFC6824]  Ford, A., Raiciu, C., Handley, M., and O. Bonaventure,
               "TCP Extensions for Multipath Operation with Multiple
@@ -353,7 +358,7 @@ Internet-Draft        Network Requirements for QUIC            June 2016
               <https://www.ietf.org/proceedings/88/slides/slides-88-
               tsvarea-10.pdf>.
 
-Author's Address
+Authors' Addresses
 
    Dan Wing
    Cisco Systems, Inc.
@@ -364,6 +369,10 @@ Author's Address
    Email: dwing@cisco.com
 
 
+   Joe Hildebrand
+   Cisco Systems, Inc.
+
+   Email: jhildebr@cisco.com
 
 
 
@@ -380,13 +389,4 @@ Author's Address
 
 
 
-
-
-
-
-
-
-
-
-
-Wing                    Expires December 15, 2016               [Page 7]
+Wing & Hildebrand       Expires December 15, 2016               [Page 7]
