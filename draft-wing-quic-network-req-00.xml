@@ -13,12 +13,11 @@
 <?rfc authorship="yes" ?>
 <rfc category="std" docName="draft-wing-quic-network-req-00" ipr="trust200902">
   <front>
-    <title abbrev="Network Requirements for QUIC">
-    Network Requirements for QUIC</title>
+    <title abbrev="Network Path Requirements for QUIC">
+    Network Path Requirements for QUIC</title>
 
     <author fullname="Dan Wing" initials="D." surname="Wing">
       <organization abbrev="Cisco">Cisco Systems, Inc.</organization>
-
       <address>
         <postal>
           <street>170 West Tasman Drive</street>
@@ -30,16 +29,21 @@
         <email>dwing@cisco.com</email>
       </address>
     </author>
-
-
+    <author fullname="Joe Hildebrand" initials="J." surname="Hildebrand">
+      <organization abbrev="Cisco">Cisco Systems, Inc.</organization>
+      <address>
+        <email>jhildebr@cisco.com</email>
+      </address>
+    </author>
     <date></date>
-
     <workgroup>QUIC</workgroup>
 
-
     <abstract>
-      <t>Identifying QUIC traffic benefits both QUIC and network
-security, as described by this document.</t>
+      <t>As QUIC is deployed in more networks, some existing network path security
+        infrastructure will need to be updated.  This document describes a
+        few ways QUIC might be modifified to make these updates possible
+        and palatable to the developers and operators that will need to make
+        the changes.</t>
     </abstract>
   </front>
 
@@ -51,46 +55,50 @@ evolve <xref target="I-D.hildebrand-middlebox-erosion"></xref>.  There
 is a strong desire to avoid this ossification with QUIC.  At the same
 time, there is a desire to treat QUIC better than normal UDP traffic;
 that is, to treat QUIC as well as TCP traffic.  Unfortunately,
-the lack of header information in QUIC prevents the network from
-identifying QUIC traffic and prevents the network from treating
+the lack of header information in QUIC prevents the network path from
+identifying QUIC traffic and prevents the path from treating
 QUIC as a transport protocol on par with TCP.</t>
+
+<t>Although it might be possible for path elements to heuristically
+perform their traditional roles, explictly making the path a part
+of the QUIC architecture will generate a superior user experience.  Note that
+the information required to be exposed is *less* than TCP exposes, in order to
+enable future QUIC extensibility.</t>
 
 <t>This paper assumes that QUIC will use TLS 1.3 and that QUIC will
 not perform TLS session resumption when switching interfaces.</t>
 </section>
 
-
 <section title="Consent to Receive and Rate Limiting">
+<t>On many networks UDP is rate-limited or completely blocked, or a per-host
+or per-link basis.  The limits are imposed to prevent compromised hosts from
+generating high volumes of UDP traffic towards a victim
+<xref target="I-D.byrne-opsec-udp-advisory"></xref>.  Some
+protocols are request/response and could have higher rate limits
+because consent to receive is visible to the path (e.g., DNS, NTP) but others
+are send-only (e.g., SNMP traps, SYSLOG).  The configuration expense and fear
+of ossification involved in deeper packet inspection is not commesurate
+with the benefit of higher rate limits for those request/response
+protocols, so many networks simply rate limit or block UDP.</t>
+
 <t>Unlike UDP, TCP has a clear consent-to-receive indicator, which is
-why TCP does not suffer from rate-limits on those same networks.  For
-TCP, the network can observe the consent to receive by patching
+why TCP is not subjected to rate-limits on those same networks.  For
+TCP, the path can observe the consent to receive by patching
 acknowledgement numbers with their associated sequence numbers.
 WebRTC's data channel runs over UDP and has
-network-observable <xref target="RFC7675">Consent Freshness</xref> packets.
+path-observable <xref target="RFC7675">Consent Freshness</xref> packets.
 Multipath TCP (<xref target="RFC6824">MPTCP</xref>) sends its
-acknowledgements on the (reverse) path of the data, which provides a 
-clear consent-to-receive indicator to the network.</t>
+acknowledgements on the (reverse) path of the data, which provides a
+clear consent-to-receive indicator to the path.</t>
 
 <t>However, QUIC does not provide consent information visible to the
-network, and QUIC is silent if its own acknowledgements would be sent
+path, and QUIC is silent if its own acknowledgements would be sent
 on the (reverse) path of the data.  Without this visibility, QUIC
 traffic that a host wants to receive cannot be distinguished from
 attack traffic.</t>
 
-<t>On many networks UDP is rate-limited or completely blocked.  This
-rate limit is applied per host or applied per link.  The limits are
-imposed to prevent compromised hosts from generating high volumes of
-UDP traffic towards a
-victim <xref target="I-D.byrne-opsec-udp-advisory"></xref>.  Some
-protocols are request/response and could have higher rate limits
-because consent is visible (e.g., DNS, NTP) but others are send-only
-(e.g., SNMP traps, SYSLOG).  The configuration expense and fear of
-ossification involved in deeper packet inspection is not commesurate
-with the benefit of higher rate limits for those request/response
-protocols, so many networks simply rate limit or block UDP.</t>
-
 <t><list style="hanging">
-<t>Recommendation: Provide network-visible consent request and consent
+<t>Recommendation: Provide path-visible consent request and consent
 acknowledgement for a given 5-tuple.</t>
 </list></t>
 </section>
@@ -112,16 +120,16 @@ without an additional round-trip with its Connection Id.  However, if
 the mapping is destroyed and the server sends data first, the server's
 packets will be dropped by the firewall or NAT.  This problem can be
 mitigated by (a) the client identifying its long-lived connections to
-the network (e.g., using PCP or UPnP IGD) or (b) by using an
-easily-identified QUIC header so the network can hopefully identify
+the path (e.g., using PCP or UPnP IGD) or (b) by using an
+easily-identified QUIC header so the pat can hopefully identify
 that header and apply a longer, TCP-like mapping.  Neither is a
 perfect solution.  Note that heuristic NAT / firewall beahavior
 discovery is tempting, but imperfect <xref target="RFC5780"></xref>,
-leaving QUIC with needing to send occasional keepalivers as the best
+leaving QUIC with sending occasional keepalives as the best
 assurance against mapping destruction (Section 8.10 of
 <xref target="I-D.tsvwg-quic-protocol"></xref>).</t>
 
-<t>Experience with TCP is that network state needs to be retained
+<t>Experience with TCP is that state needs to be retained
 after processing the initial session shutdown packet, to avoid
 half-closed sessions on the TCP endpoints.  Although QUIC's termination
 mechanism is simplier than TCP's, it is desirable to avoid causing
@@ -129,25 +137,25 @@ half-closed sessions with QUIC.</t>
 
 <t><list style="hanging">
 <t>Recommendation: QUIC's public reset facility needs to describe
-timing recommendations for network state expiry.</t>
+timing recommendations for path state expiry.</t>
 </list></t>
 </section>
 
-<section title="QUIC Identification">
+<section title="Identification">
 <t>The externally-visible QUIC version number is useful for future
-protocol agilty.  However, as this is visible to the network, it is
+protocol agilty.  However, as this is visible to the path, it is
 likely to ossify around that value.  Thus, having something else to
 identify QUIC is useful, so that the version number can change while
 retaining the same identification of a QUIC packet.</t>
 
 <t><list style="hanging">
-<t>Recommendation:  Provide network-visible mechanism to identify a
+<t>Recommendation:  Provide path-visible mechanism to identify a
 QUIC packet.</t>
-<t>Recommendation:  Have a network-hidden version number.</t>
+<t>Recommendation:  Have a path-invisible version number.</t>
 </list></t>
 </section>
 
-<section title="Spurious QUIC Packets">
+<section title="Spurious Packets">
 <t>A spurious packet may arrive when an endpoint (client or server):</t>
 <t><list style="symbols">
 <t>loses state due to a reboot</t>
@@ -174,7 +182,7 @@ to send a hint to the remote system that its packet was not processed.</t>
 
 <t>Non-QUIC application listening: A non-QUIC application will not
 expect to receive a QUIC packet.  Upon receiving a QUIC packet, the
-application will attempt to parse the packet.  If the application 
+application will attempt to parse the packet.  If the application
 generates a response, it will not match the QUIC Connection ID of
 the sender, and will be dropped by the QUIC sender.  It is unknown
 if receiving unsolicited QUIC packets causes problems for commonly-
@@ -187,9 +195,9 @@ causes new problems for existing UDP clients or UDP servers.</t>
 
 <t>No application listening: If there is no process listening on that
 UDP port, the host will generate an ICMP or ICMP6 error (destination
-unreachable, port unreachable).  Most operating systems allow
-non-privileged applications to receive and parse ICMP errors, allowing
-the QUIC stack to validate the returned ICMP
+unreachable, port unreachable), or due to policy reasons may not react at all.
+Most operating systems allow non-privileged applications to receive and parse
+ICMP errors, allowing the QUIC stack to validate the returned ICMP
 error <xref target="ICMPTest"></xref>.</t>
 
 <t><list style="hanging">
@@ -201,11 +209,11 @@ errors (Section 4 of
 </list></t>
 </section>
 
-<section title="Network State Loss">
+<section title="Path State Loss">
 <t>If a firewall, NAT, or load balancer discards its mapping state
 without notifying the endpoint, both endpoints can take a long time to
-discover the network state has been lost.  To avoid this delay, it is
-desirable to send a signal that the network state will be lost or
+discover the path state has been lost.  To avoid this delay, it is
+desirable to send a signal that the path state will be lost or
 has been lost.</t>
 
 <t><list style="hanging">
@@ -213,25 +221,6 @@ has been lost.</t>
 signal that their mapping will be lost or has been lost.</t>
 </list></t>
 </section>
-
-<!--
-<section title="Network Diagnostics">
-<t>With TCP, packet loss and round-trip times can be observed by
-examining sequence and ACK numbers.  This is useful to diagnose where
-queues have formed on networks and to identify packets that were never
-received by a host.  Both <xref target="RFC3550">RTP</xref> and Secure
-RTP (<xref target="RFC3711">SRTP</xref>) were also designed to expose
-that information in their (S)RTP and (S)RTCP headers to the network to
-aid troubleshooting and diagnostics.</t>
-
-<t><list style="hanging">
-<t>Recommendation:  QUIC expose acknowledgement frames to the network
-to aid diagnosting packet loss and delay.  (It is currently unclear
-if QUIC will encrypt the acknowledgement frames when QUIC adopts
-TLS 1.3.)</t>
-</list></t>
-</section>
--->
 
 <section title="Security Considerations">
 <t>This document describes how QUIC needs to be distinguished from
@@ -245,27 +234,22 @@ QUIC security considerations:</t>
 <t>Examine impact of <xref target="CORS">CORS</xref> to generate
 new UDP attacks against both clients and servers.</t>
 
-<t>Due to TCP attacks, initial sequence numbers are now randomized.
+<t>Due to TCP attacks, TCP initial sequence numbers are now randomized.
 QUIC should be analyzed if it would similarly benefit from randomized
 initial sequence numbers.</t>
 </list></t>
 
-
 </section>
 
-
-
-
-    <section title="IANA Considerations">
-      <t>None.</t>
-    </section>
+<section title="IANA Considerations">
+  <t>None.</t>
+</section>
 
 <!--
    <section title="Acknowledgements">
     </section>
 -->
   </middle>
-
 
   <back>
     <references title="Normative References">
@@ -276,7 +260,7 @@ initial sequence numbers.</t>
 <!--
   ##
   ##  We want to cite -02 specifically, rather than "the most recent"
-  ##     <?rfc include="reference.I-D.tsvwg-quic-protocol"?> 
+  ##     <?rfc include="reference.I-D.tsvwg-quic-protocol"?>
   ##
 -->
   <reference anchor='I-D.tsvwg-quic-protocol'>
@@ -303,7 +287,6 @@ initial sequence numbers.</t>
     </reference>
 
     </references>
-
 
     <references title="Informative References">
 
@@ -369,10 +352,6 @@ initial sequence numbers.</t>
           <date day="16" month="January" year="2014"/>
         </front>
        </reference>
-
-
     </references>
-
-
   </back>
 </rfc>

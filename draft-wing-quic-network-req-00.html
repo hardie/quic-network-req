@@ -5,7 +5,7 @@
 <head profile="http://www.w3.org/2006/03/hcard http://dublincore.org/documents/2008/08/04/dc-html/">
   <meta http-equiv="Content-Type" content="text/html; charset=us-ascii" />
 
-  <title>Network Requirements for QUIC</title>
+  <title>Network Path Requirements for QUIC</title>
 
   <style type="text/css" title="Xml2Rfc (sans serif)">
   /*<![CDATA[*/
@@ -377,9 +377,9 @@
 <link href="#rfc.section.1" rel="Chapter" title="1 Introduction"/>
 <link href="#rfc.section.2" rel="Chapter" title="2 Consent to Receive and Rate Limiting"/>
 <link href="#rfc.section.3" rel="Chapter" title="3 Long-lived Connections and HTTP Server Push"/>
-<link href="#rfc.section.4" rel="Chapter" title="4 QUIC Identification"/>
-<link href="#rfc.section.5" rel="Chapter" title="5 Spurious QUIC Packets"/>
-<link href="#rfc.section.6" rel="Chapter" title="6 Network State Loss"/>
+<link href="#rfc.section.4" rel="Chapter" title="4 Identification"/>
+<link href="#rfc.section.5" rel="Chapter" title="5 Spurious Packets"/>
+<link href="#rfc.section.6" rel="Chapter" title="6 Path State Loss"/>
 <link href="#rfc.section.7" rel="Chapter" title="7 Security Considerations"/>
 <link href="#rfc.section.8" rel="Chapter" title="8 IANA Considerations"/>
 <link href="#rfc.references" rel="Chapter" title="9 References"/>
@@ -388,14 +388,14 @@
 <link href="#rfc.authors" rel="Chapter"/>
 
 
-  <meta name="generator" content="xml2rfc version 2.5.0 - http://tools.ietf.org/tools/xml2rfc" />
+  <meta name="generator" content="xml2rfc version 2.5.1 - http://tools.ietf.org/tools/xml2rfc" />
   <link rel="schema.dct" href="http://purl.org/dc/terms/" />
 
-  <meta name="dct.creator" content="Wing, D." />
+  <meta name="dct.creator" content="Wing, D. and J. Hildebrand" />
   <meta name="dct.identifier" content="urn:ietf:id:draft-wing-quic-network-req-00" />
   <meta name="dct.issued" scheme="ISO8601" content="2016-6-13" />
-  <meta name="dct.abstract" content="Identifying QUIC traffic benefits both QUIC and network security, as described by this document." />
-  <meta name="description" content="Identifying QUIC traffic benefits both QUIC and network security, as described by this document." />
+  <meta name="dct.abstract" content="As QUIC is deployed in more networks, some existing network path security infrastructure will need to be updated.  This document describes a few ways QUIC might be modifified to make these updates possible and palatable to the developers and operators that will need to make the changes." />
+  <meta name="description" content="As QUIC is deployed in more networks, some existing network path security infrastructure will need to be updated.  This document describes a few ways QUIC might be modifified to make these updates possible and palatable to the developers and operators that will need to make the changes." />
 
 </head>
 
@@ -410,28 +410,28 @@
 </tr>
 <tr>
   <td class="left">Internet-Draft</td>
-  <td class="right">Cisco</td>
+  <td class="right">J. Hildebrand</td>
 </tr>
 <tr>
   <td class="left">Intended status: Standards Track</td>
-  <td class="right">June 13, 2016</td>
+  <td class="right">Cisco</td>
 </tr>
 <tr>
   <td class="left">Expires: December 15, 2016</td>
-  <td class="right"></td>
+  <td class="right">June 13, 2016</td>
 </tr>
 
     	
     </tbody>
   </table>
 
-  <p class="title">Network Requirements for QUIC<br />
+  <p class="title">Network Path Requirements for QUIC<br />
   <span class="filename">draft-wing-quic-network-req-00</span></p>
   
   <h1 id="rfc.abstract">
   <a href="#rfc.abstract">Abstract</a>
 </h1>
-<p>Identifying QUIC traffic benefits both QUIC and network security, as described by this document.</p>
+<p>As QUIC is deployed in more networks, some existing network path security infrastructure will need to be updated.  This document describes a few ways QUIC might be modifified to make these updates possible and palatable to the developers and operators that will need to make the changes.</p>
 <h1 id="rfc.status">
   <a href="#rfc.status">Status of This Memo</a>
 </h1>
@@ -453,53 +453,54 @@
   	<li>1.   <a href="#rfc.section.1">Introduction</a></li>
 <li>2.   <a href="#rfc.section.2">Consent to Receive and Rate Limiting</a></li>
 <li>3.   <a href="#rfc.section.3">Long-lived Connections and HTTP Server Push</a></li>
-<li>4.   <a href="#rfc.section.4">QUIC Identification</a></li>
-<li>5.   <a href="#rfc.section.5">Spurious QUIC Packets</a></li>
-<li>6.   <a href="#rfc.section.6">Network State Loss</a></li>
+<li>4.   <a href="#rfc.section.4">Identification</a></li>
+<li>5.   <a href="#rfc.section.5">Spurious Packets</a></li>
+<li>6.   <a href="#rfc.section.6">Path State Loss</a></li>
 <li>7.   <a href="#rfc.section.7">Security Considerations</a></li>
 <li>8.   <a href="#rfc.section.8">IANA Considerations</a></li>
 <li>9.   <a href="#rfc.references">References</a></li>
 <ul><li>9.1.   <a href="#rfc.references.1">Normative References</a></li>
 <li>9.2.   <a href="#rfc.references.2">Informative References</a></li>
-</ul><li><a href="#rfc.authors">Author's Address</a></li>
+</ul><li><a href="#rfc.authors">Authors' Addresses</a></li>
 
 
   </ul>
 
   <h1 id="rfc.section.1"><a href="#rfc.section.1">1.</a> Introduction</h1>
-<p id="rfc.section.1.p.1">Middleboxes, especially firewalls and NATs, have contributed to the inability of the Internet to evolve <a href="#I-D.hildebrand-middlebox-erosion">[I-D.hildebrand-middlebox-erosion]</a>.  There is a strong desire to avoid this ossification with QUIC.  At the same time, there is a desire to treat QUIC better than normal UDP traffic; that is, to treat QUIC as well as TCP traffic.  Unfortunately, the lack of header information in QUIC prevents the network from identifying QUIC traffic and prevents the network from treating QUIC as a transport protocol on par with TCP.</p>
-<p id="rfc.section.1.p.2">This paper assumes that QUIC will use TLS 1.3 and that QUIC will not perform TLS session resumption when switching interfaces.</p>
+<p id="rfc.section.1.p.1">Middleboxes, especially firewalls and NATs, have contributed to the inability of the Internet to evolve <a href="#I-D.hildebrand-middlebox-erosion">[I-D.hildebrand-middlebox-erosion]</a>.  There is a strong desire to avoid this ossification with QUIC.  At the same time, there is a desire to treat QUIC better than normal UDP traffic; that is, to treat QUIC as well as TCP traffic.  Unfortunately, the lack of header information in QUIC prevents the network path from identifying QUIC traffic and prevents the path from treating QUIC as a transport protocol on par with TCP.</p>
+<p id="rfc.section.1.p.2">Although it might be possible for path elements to heuristically perform their traditional roles, explictly making the path a part of the QUIC architecture will generate a superior user experience.  Note that the information required to be exposed is *less* than TCP exposes, in order to enable future QUIC extensibility.</p>
+<p id="rfc.section.1.p.3">This paper assumes that QUIC will use TLS 1.3 and that QUIC will not perform TLS session resumption when switching interfaces.</p>
 <h1 id="rfc.section.2"><a href="#rfc.section.2">2.</a> Consent to Receive and Rate Limiting</h1>
-<p id="rfc.section.2.p.1">Unlike UDP, TCP has a clear consent-to-receive indicator, which is why TCP does not suffer from rate-limits on those same networks.  For TCP, the network can observe the consent to receive by patching acknowledgement numbers with their associated sequence numbers.  WebRTC's data channel runs over UDP and has network-observable <a href="#RFC7675">Consent Freshness</a> <cite title="NONE">[RFC7675]</cite> packets.  Multipath TCP (<a href="#RFC6824">MPTCP</a> <cite title="NONE">[RFC6824]</cite>) sends its acknowledgements on the (reverse) path of the data, which provides a clear consent-to-receive indicator to the network.</p>
-<p id="rfc.section.2.p.2">However, QUIC does not provide consent information visible to the network, and QUIC is silent if its own acknowledgements would be sent on the (reverse) path of the data.  Without this visibility, QUIC traffic that a host wants to receive cannot be distinguished from attack traffic.</p>
-<p id="rfc.section.2.p.3">On many networks UDP is rate-limited or completely blocked.  This rate limit is applied per host or applied per link.  The limits are imposed to prevent compromised hosts from generating high volumes of UDP traffic towards a victim <a href="#I-D.byrne-opsec-udp-advisory">[I-D.byrne-opsec-udp-advisory]</a>.  Some protocols are request/response and could have higher rate limits because consent is visible (e.g., DNS, NTP) but others are send-only (e.g., SNMP traps, SYSLOG).  The configuration expense and fear of ossification involved in deeper packet inspection is not commesurate with the benefit of higher rate limits for those request/response protocols, so many networks simply rate limit or block UDP.</p>
+<p id="rfc.section.2.p.1">On many networks UDP is rate-limited or completely blocked, or a per-host or per-link basis.  The limits are imposed to prevent compromised hosts from generating high volumes of UDP traffic towards a victim <a href="#I-D.byrne-opsec-udp-advisory">[I-D.byrne-opsec-udp-advisory]</a>.  Some protocols are request/response and could have higher rate limits because consent to receive is visible to the path (e.g., DNS, NTP) but others are send-only (e.g., SNMP traps, SYSLOG).  The configuration expense and fear of ossification involved in deeper packet inspection is not commesurate with the benefit of higher rate limits for those request/response protocols, so many networks simply rate limit or block UDP.</p>
+<p id="rfc.section.2.p.2">Unlike UDP, TCP has a clear consent-to-receive indicator, which is why TCP is not subjected to rate-limits on those same networks.  For TCP, the path can observe the consent to receive by patching acknowledgement numbers with their associated sequence numbers.  WebRTC's data channel runs over UDP and has path-observable <a href="#RFC7675">Consent Freshness</a> <cite title="NONE">[RFC7675]</cite> packets.  Multipath TCP (<a href="#RFC6824">MPTCP</a> <cite title="NONE">[RFC6824]</cite>) sends its acknowledgements on the (reverse) path of the data, which provides a clear consent-to-receive indicator to the path.</p>
+<p id="rfc.section.2.p.3">However, QUIC does not provide consent information visible to the path, and QUIC is silent if its own acknowledgements would be sent on the (reverse) path of the data.  Without this visibility, QUIC traffic that a host wants to receive cannot be distinguished from attack traffic.</p>
 <p/>
 
 <dl>
   <dt></dt>
-  <dd style="margin-left: 8">Recommendation: Provide network-visible consent request and consent acknowledgement for a given 5-tuple.</dd>
+  <dd style="margin-left: 8">Recommendation: Provide path-visible consent request and consent acknowledgement for a given 5-tuple.</dd>
 </dl>
 <h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> Long-lived Connections and HTTP Server Push</h1>
 <p id="rfc.section.3.p.1">Although the recommended UDP timeout for arbitrary ports is two minutes (Section 4.3 of <a href="#RFC4787">[RFC4787]</a>), some residential CPE devices have a 30 second timeout and a majority have a three minute timeout (<a href="#homeCPE">[homeCPE]</a>, <a href="#tsvarea">[tsvarea]</a>).  Longer timeouts are provided to connection-oriented TCP -- 4 minutes during connection establishment and 2 hours after connection establishment <a href="#homeCPE">[homeCPE]</a>.</p>
-<p id="rfc.section.3.p.2">Such short timers are not a problem if the mapping is destroyed and the client sends data first, as a new mapping will be created and QUIC handles a new mapping (on a new UDP port or even on a new IP address) without an additional round-trip with its Connection Id.  However, if the mapping is destroyed and the server sends data first, the server's packets will be dropped by the firewall or NAT.  This problem can be mitigated by (a) the client identifying its long-lived connections to the network (e.g., using PCP or UPnP IGD) or (b) by using an easily-identified QUIC header so the network can hopefully identify that header and apply a longer, TCP-like mapping.  Neither is a perfect solution.  Note that heuristic NAT / firewall beahavior discovery is tempting, but imperfect <a href="#RFC5780">[RFC5780]</a>, leaving QUIC with needing to send occasional keepalivers as the best assurance against mapping destruction (Section 8.10 of <a href="#I-D.tsvwg-quic-protocol">[I-D.tsvwg-quic-protocol]</a>).</p>
-<p id="rfc.section.3.p.3">Experience with TCP is that network state needs to be retained after processing the initial session shutdown packet, to avoid half-closed sessions on the TCP endpoints.  Although QUIC's termination mechanism is simplier than TCP's, it is desirable to avoid causing half-closed sessions with QUIC.</p>
+<p id="rfc.section.3.p.2">Such short timers are not a problem if the mapping is destroyed and the client sends data first, as a new mapping will be created and QUIC handles a new mapping (on a new UDP port or even on a new IP address) without an additional round-trip with its Connection Id.  However, if the mapping is destroyed and the server sends data first, the server's packets will be dropped by the firewall or NAT.  This problem can be mitigated by (a) the client identifying its long-lived connections to the path (e.g., using PCP or UPnP IGD) or (b) by using an easily-identified QUIC header so the pat can hopefully identify that header and apply a longer, TCP-like mapping.  Neither is a perfect solution.  Note that heuristic NAT / firewall beahavior discovery is tempting, but imperfect <a href="#RFC5780">[RFC5780]</a>, leaving QUIC with sending occasional keepalives as the best assurance against mapping destruction (Section 8.10 of <a href="#I-D.tsvwg-quic-protocol">[I-D.tsvwg-quic-protocol]</a>).</p>
+<p id="rfc.section.3.p.3">Experience with TCP is that state needs to be retained after processing the initial session shutdown packet, to avoid half-closed sessions on the TCP endpoints.  Although QUIC's termination mechanism is simplier than TCP's, it is desirable to avoid causing half-closed sessions with QUIC.</p>
 <p/>
 
 <dl>
   <dt></dt>
-  <dd style="margin-left: 8">Recommendation: QUIC's public reset facility needs to describe timing recommendations for network state expiry.</dd>
+  <dd style="margin-left: 8">Recommendation: QUIC's public reset facility needs to describe timing recommendations for path state expiry.</dd>
 </dl>
-<h1 id="rfc.section.4"><a href="#rfc.section.4">4.</a> QUIC Identification</h1>
-<p id="rfc.section.4.p.1">The externally-visible QUIC version number is useful for future protocol agilty.  However, as this is visible to the network, it is likely to ossify around that value.  Thus, having something else to identify QUIC is useful, so that the version number can change while retaining the same identification of a QUIC packet.</p>
+<h1 id="rfc.section.4"><a href="#rfc.section.4">4.</a> Identification</h1>
+<p id="rfc.section.4.p.1">The externally-visible QUIC version number is useful for future protocol agilty.  However, as this is visible to the path, it is likely to ossify around that value.  Thus, having something else to identify QUIC is useful, so that the version number can change while retaining the same identification of a QUIC packet.</p>
 <p/>
 
 <dl>
   <dt></dt>
-  <dd style="margin-left: 8">Recommendation:  Provide network-visible mechanism to identify a QUIC packet.</dd>
+  <dd style="margin-left: 8">Recommendation:  Provide path-visible mechanism to identify a QUIC packet.</dd>
   <dt></dt>
-  <dd style="margin-left: 8">Recommendation:  Have a network-hidden version number.</dd>
+  <dd style="margin-left: 8">Recommendation:  Have a path-invisible version number.</dd>
 </dl>
-<h1 id="rfc.section.5"><a href="#rfc.section.5">5.</a> Spurious QUIC Packets</h1>
+<h1 id="rfc.section.5"><a href="#rfc.section.5">5.</a> Spurious Packets</h1>
 <p id="rfc.section.5.p.1">A spurious packet may arrive when an endpoint (client or server):</p>
 <p/>
 
@@ -524,15 +525,15 @@
   <dt></dt>
   <dd style="margin-left: 8">Recommendation: Evalaute if receiving unsolicited QUIC packets causes new problems for existing UDP clients or UDP servers.</dd>
 </dl>
-<p id="rfc.section.5.p.8">No application listening: If there is no process listening on that UDP port, the host will generate an ICMP or ICMP6 error (destination unreachable, port unreachable).  Most operating systems allow non-privileged applications to receive and parse ICMP errors, allowing the QUIC stack to validate the returned ICMP error <a href="#ICMPTest">[ICMPTest]</a>.</p>
+<p id="rfc.section.5.p.8">No application listening: If there is no process listening on that UDP port, the host will generate an ICMP or ICMP6 error (destination unreachable, port unreachable), or due to policy reasons may not react at all.  Most operating systems allow non-privileged applications to receive and parse ICMP errors, allowing the QUIC stack to validate the returned ICMP error <a href="#ICMPTest">[ICMPTest]</a>.</p>
 <p/>
 
 <dl>
   <dt></dt>
   <dd style="margin-left: 8">Recommendation: QUIC applications should honor an ICMP hard error matching the 5-tuple of the remote peer and its recently-sent Connection ID, in a fashion similar to TCP's handling of ICMP hard errors (Section 4 of <a href="#RFC5927">[RFC5927]</a>).</dd>
 </dl>
-<h1 id="rfc.section.6"><a href="#rfc.section.6">6.</a> Network State Loss</h1>
-<p id="rfc.section.6.p.1">If a firewall, NAT, or load balancer discards its mapping state without notifying the endpoint, both endpoints can take a long time to discover the network state has been lost.  To avoid this delay, it is desirable to send a signal that the network state will be lost or has been lost.</p>
+<h1 id="rfc.section.6"><a href="#rfc.section.6">6.</a> Path State Loss</h1>
+<p id="rfc.section.6.p.1">If a firewall, NAT, or load balancer discards its mapping state without notifying the endpoint, both endpoints can take a long time to discover the path state has been lost.  To avoid this delay, it is desirable to send a signal that the path state will be lost or has been lost.</p>
 <p/>
 
 <dl>
@@ -546,7 +547,7 @@
 
 <ul>
   <li>Examine impact of <a href="#CORS">CORS</a> <cite title="NONE">[CORS]</cite> to generate new UDP attacks against both clients and servers.</li>
-  <li>Due to TCP attacks, initial sequence numbers are now randomized.  QUIC should be analyzed if it would similarly benefit from randomized initial sequence numbers.</li>
+  <li>Due to TCP attacks, TCP initial sequence numbers are now randomized.  QUIC should be analyzed if it would similarly benefit from randomized initial sequence numbers.</li>
 </ul>
 <h1 id="rfc.section.8"><a href="#rfc.section.8">8.</a> IANA Considerations</h1>
 <p id="rfc.section.8.p.1">None.</p>
@@ -634,7 +635,7 @@
   </tbody>
 </table>
 <h1 id="rfc.authors">
-  <a href="#rfc.authors">Author's Address</a>
+  <a href="#rfc.authors">Authors' Addresses</a>
 </h1>
 <div class="avoidbreak">
   <address class="vcard">
@@ -656,6 +657,27 @@
 	  <span class="country-name vcardline">USA</span>
 	</span>
 	<span class="vcardline">EMail: <a href="mailto:dwing@cisco.com">dwing@cisco.com</a></span>
+
+  </address>
+</div><div class="avoidbreak">
+  <address class="vcard">
+	<span class="vcardline">
+	  <span class="fn">Joe Hildebrand</span> 
+	  <span class="n hidden">
+		<span class="family-name">Hildebrand</span>
+	  </span>
+	</span>
+	<span class="org vcardline">Cisco Systems, Inc.</span>
+	<span class="adr">
+	  
+	  <span class="vcardline">
+		<span class="locality"></span> 
+		<span class="region"></span>
+		<span class="code"></span>
+	  </span>
+	  <span class="country-name vcardline"></span>
+	</span>
+	<span class="vcardline">EMail: <a href="mailto:jhildebr@cisco.com">jhildebr@cisco.com</a></span>
 
   </address>
 </div>
