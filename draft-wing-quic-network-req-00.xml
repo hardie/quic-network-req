@@ -121,32 +121,39 @@ leaving QUIC with needing to send occasional keepalivers as the best
 assurance against mapping destruction (Section 8.10 of
 <xref target="I-D.tsvwg-quic-protocol"></xref>).</t>
 
+<t>Experience with TCP is that network state needs to be retained
+after processing the initial session shutdown packet, to avoid
+half-closed sessions on the TCP endpoints.  Although QUIC's termination
+mechanism is simplier than TCP's, it is desirable to avoid causing
+half-closed sessions with QUIC.</t>
+
 <t><list style="hanging">
-<t>Recommendation:  Provide network-visible QUIC identifier so
-network can provide longer mapping lifetime.</t>
+<t>Recommendation: QUIC's public reset facility needs to describe
+timing recommendations for network state expiry.</t>
 </list></t>
 </section>
 
-<section title="QUIC Version ID">
-<t>When joining a new network with an existing QUIC session, the QUIC
-Version is not sent.  This reduces QUIC identification to heuristics
-which are fragile.  Without stronger QUIC identification, the other
-features described in this document cannot be attained.</t>
+<section title="QUIC Identification">
+<t>The externally-visible QUIC version number is useful for future
+protocol agilty.  However, as this is visible to the network, it is
+likely to ossify around that value.  Thus, having something else to
+identify QUIC is useful, so that the version number can change while
+retaining the same identification of a QUIC packet.</t>
 
 <t><list style="hanging">
-<t>Recommendation:  Re-joining an existing QUIC session should be
-clearly identifyable by the network.</t>
+<t>Recommendation:  Provide network-visible mechanism to identify a
+QUIC packet.</t>
+<t>Recommendation:  Have a network-hidden version number.</t>
 </list></t>
 </section>
 
 <section title="Endpoint State Loss">
 <t>When an endpoint (client or server) loses state due to a reboot, or a
 host acquires a previously-active QUIC host's IP address, there may be
-spurious QUIC packets that arrives to a host.  The host might have a 
+spurious QUIC packets that arrive at a host.  The host might have a 
 QUIC application listening on that socket, a non-QUIC application listening
 on that socket, or no application listening on that socket.  These
 are described below.</t>
-
 
 <t>QUIC application listening: If the socket is expecting QUIC traffic
 and receives a spurious QUIC packet, the QUIC Connection ID will not

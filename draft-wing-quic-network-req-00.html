@@ -377,7 +377,7 @@
 <link href="#rfc.section.1" rel="Chapter" title="1 Introduction"/>
 <link href="#rfc.section.2" rel="Chapter" title="2 Consent to Receive and Rate Limiting"/>
 <link href="#rfc.section.3" rel="Chapter" title="3 Long-lived Connections and HTTP Server Push"/>
-<link href="#rfc.section.4" rel="Chapter" title="4 QUIC Version ID"/>
+<link href="#rfc.section.4" rel="Chapter" title="4 QUIC Identification"/>
 <link href="#rfc.section.5" rel="Chapter" title="5 Endpoint State Loss"/>
 <link href="#rfc.section.6" rel="Chapter" title="6 Network State Loss"/>
 <link href="#rfc.section.7" rel="Chapter" title="7 Network Diagnostics"/>
@@ -454,7 +454,7 @@
   	<li>1.   <a href="#rfc.section.1">Introduction</a></li>
 <li>2.   <a href="#rfc.section.2">Consent to Receive and Rate Limiting</a></li>
 <li>3.   <a href="#rfc.section.3">Long-lived Connections and HTTP Server Push</a></li>
-<li>4.   <a href="#rfc.section.4">QUIC Version ID</a></li>
+<li>4.   <a href="#rfc.section.4">QUIC Identification</a></li>
 <li>5.   <a href="#rfc.section.5">Endpoint State Loss</a></li>
 <li>6.   <a href="#rfc.section.6">Network State Loss</a></li>
 <li>7.   <a href="#rfc.section.7">Network Diagnostics</a></li>
@@ -484,19 +484,23 @@
 <h1 id="rfc.section.3"><a href="#rfc.section.3">3.</a> Long-lived Connections and HTTP Server Push</h1>
 <p id="rfc.section.3.p.1">Although the recommended UDP timeout for arbitrary ports is two minutes (Section 4.3 of <a href="#RFC4787">[RFC4787]</a>), some residential CPE devices have a 30 second timeout and a majority have a three minute timeout (<a href="#homeCPE">[homeCPE]</a>, <a href="#tsvarea">[tsvarea]</a>).  Longer timeouts are provided to connection-oriented TCP -- 4 minutes during connection establishment and 2 hours after connection establishment <a href="#homeCPE">[homeCPE]</a>.</p>
 <p id="rfc.section.3.p.2">Such short timers are not a problem if the mapping is destroyed and the client sends data first, as a new mapping will be created and QUIC handles a new mapping (on a new UDP port or even on a new IP address) without an additional round-trip with its Connection Id.  However, if the mapping is destroyed and the server sends data first, the server's packets will be dropped by the firewall or NAT.  This problem can be mitigated by (a) the client identifying its long-lived connections to the network (e.g., using PCP or UPnP IGD) or (b) by using an easily-identified QUIC header so the network can hopefully identify that header and apply a longer, TCP-like mapping.  Neither is a perfect solution.  Note that heuristic NAT / firewall beahavior discovery is tempting, but imperfect <a href="#RFC5780">[RFC5780]</a>, leaving QUIC with needing to send occasional keepalivers as the best assurance against mapping destruction (Section 8.10 of <a href="#I-D.tsvwg-quic-protocol">[I-D.tsvwg-quic-protocol]</a>).</p>
+<p id="rfc.section.3.p.3">Experience with TCP is that network state needs to be retained after processing the initial session shutdown packet, to avoid half-closed sessions on the TCP endpoints.  Although QUIC's termination mechanism is simplier than TCP's, it is desirable to avoid causing half-closed sessions with QUIC.</p>
 <p/>
 
 <dl>
   <dt></dt>
-  <dd style="margin-left: 8">Recommendation:  Provide network-visible QUIC identifier so network can provide longer mapping lifetime.</dd>
+  <dd style="margin-left: 8">Recommendation: QUIC's public reset facility needs to describe timing recommendations for network state expiry.</dd>
 </dl>
-<h1 id="rfc.section.4"><a href="#rfc.section.4">4.</a> QUIC Version ID</h1>
-<p id="rfc.section.4.p.1">When joining a new network with an existing QUIC session, the QUIC Version is not sent.  This reduces QUIC identification to heuristics which are fragile.  Without stronger QUIC identification, the other features described in this document cannot be attained.</p>
+<h1 id="rfc.section.4"><a href="#rfc.section.4">4.</a> QUIC Identification</h1>
+<p id="rfc.section.4.p.1">The externally-visible QUIC version number is useful for future protocol agilty.  However, as this is visible to the network, it is likely to ossify around that value.  Thus, having something else to identify QUIC is useful, so that the version number can change while retaining the same identification of a QUIC packet.</p>
+<p id="rfc.section.4.p.2">When joining a new network with an existing QUIC session, the QUIC Version is not sent.  This reduces QUIC identification to heuristics which are fragile and will ossify around the first popular version of.  Without stronger QUIC identification, the other features described in this document cannot be attained.</p>
 <p/>
 
 <dl>
   <dt></dt>
-  <dd style="margin-left: 8">Recommendation:  Re-joining an existing QUIC session should be clearly identifyable by the network.</dd>
+  <dd style="margin-left: 8">Recommendation:  Provide network-visible mechanism to identify a QUIC packet.</dd>
+  <dt></dt>
+  <dd style="margin-left: 8">Recommendation:  Have a network-hidden version number.</dd>
 </dl>
 <h1 id="rfc.section.5"><a href="#rfc.section.5">5.</a> Endpoint State Loss</h1>
 <p id="rfc.section.5.p.1">When an endpoint (client or server) loses state due to a reboot, or a host acquires a previously-active QUIC host's IP address, there may be spurious QUIC packets that arrives to a host.  The host might have a QUIC application listening on that socket, a non-QUIC application listening on that socket, or no application listening on that socket.  These are described below.</p>

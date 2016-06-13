@@ -63,14 +63,14 @@ Table of Contents
    1.  Introduction  . . . . . . . . . . . . . . . . . . . . . . . .   2
    2.  Consent to Receive and Rate Limiting  . . . . . . . . . . . .   2
    3.  Long-lived Connections and HTTP Server Push . . . . . . . . .   3
-   4.  QUIC Version ID . . . . . . . . . . . . . . . . . . . . . . .   3
+   4.  QUIC Identification . . . . . . . . . . . . . . . . . . . . .   4
    5.  Endpoint State Loss . . . . . . . . . . . . . . . . . . . . .   4
    6.  Network State Loss  . . . . . . . . . . . . . . . . . . . . .   5
    7.  Network Diagnostics . . . . . . . . . . . . . . . . . . . . .   5
    8.  Security Considerations . . . . . . . . . . . . . . . . . . .   5
-   9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   5
-   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   5
-     10.1.  Normative References . . . . . . . . . . . . . . . . . .   5
+   9.  IANA Considerations . . . . . . . . . . . . . . . . . . . . .   6
+   10. References  . . . . . . . . . . . . . . . . . . . . . . . . .   6
+     10.1.  Normative References . . . . . . . . . . . . . . . . . .   6
      10.2.  Informative References . . . . . . . . . . . . . . . . .   6
    Author's Address  . . . . . . . . . . . . . . . . . . . . . . . .   7
 
@@ -152,15 +152,15 @@ Internet-Draft        Network Requirements for QUIC            June 2016
    needing to send occasional keepalivers as the best assurance against
    mapping destruction (Section 8.10 of [I-D.tsvwg-quic-protocol]).
 
-      Recommendation: Provide network-visible QUIC identifier so network
-      can provide longer mapping lifetime.
+   Experience with TCP is that network state needs to be retained after
+   processing the initial session shutdown packet, to avoid half-closed
+   sessions on the TCP endpoints.  Although QUIC's termination mechanism
+   is simplier than TCP's, it is desirable to avoid causing half-closed
+   sessions with QUIC.
 
-4.  QUIC Version ID
+      Recommendation: QUIC's public reset facility needs to describe
+      timing recommendations for network state expiry.
 
-   When joining a new network with an existing QUIC session, the QUIC
-   Version is not sent.  This reduces QUIC identification to heuristics
-   which are fragile.  Without stronger QUIC identification, the other
-   features described in this document cannot be attained.
 
 
 
@@ -170,8 +170,24 @@ Wing                    Expires December 15, 2016               [Page 3]
 Internet-Draft        Network Requirements for QUIC            June 2016
 
 
-      Recommendation: Re-joining an existing QUIC session should be
-      clearly identifyable by the network.
+4.  QUIC Identification
+
+   The externally-visible QUIC version number is useful for future
+   protocol agilty.  However, as this is visible to the network, it is
+   likely to ossify around that value.  Thus, having something else to
+   identify QUIC is useful, so that the version number can change while
+   retaining the same identification of a QUIC packet.
+
+   When joining a new network with an existing QUIC session, the QUIC
+   Version is not sent.  This reduces QUIC identification to heuristics
+   which are fragile and will ossify around the first popular version
+   of.  Without stronger QUIC identification, the other features
+   described in this document cannot be attained.
+
+      Recommendation: Provide network-visible mechanism to identify a
+      QUIC packet.
+
+      Recommendation: Have a network-hidden version number.
 
 5.  Endpoint State Loss
 
@@ -202,6 +218,14 @@ Internet-Draft        Network Requirements for QUIC            June 2016
    application (perhaps "unable to parse" or some similar response).  If
    the application does generate a response it will be received by the
    QUIC sender, the QUIC Connection ID of that response will not match
+
+
+
+Wing                    Expires December 15, 2016               [Page 4]
+
+Internet-Draft        Network Requirements for QUIC            June 2016
+
+
    an existing Connection ID, and non-QUIC packet will be dropped by
    QUIC.
 
@@ -218,13 +242,6 @@ Internet-Draft        Network Requirements for QUIC            June 2016
       5-tuple of the remote peer and its recently-sent Connection ID, in
       a fashion similar to TCP's handling of ICMP hard errors (Section 4
       of [RFC5927]).
-
-
-
-Wing                    Expires December 15, 2016               [Page 4]
-
-Internet-Draft        Network Requirements for QUIC            June 2016
-
 
 6.  Network State Loss
 
@@ -258,6 +275,13 @@ Internet-Draft        Network Requirements for QUIC            June 2016
    QUIC UDP traffic, so networks can defend themselves from attack and
    networks can defend hosts from attack.
 
+
+
+Wing                    Expires December 15, 2016               [Page 5]
+
+Internet-Draft        Network Requirements for QUIC            June 2016
+
+
 9.  IANA Considerations
 
    None.
@@ -271,16 +295,6 @@ Internet-Draft        Network Requirements for QUIC            June 2016
               A UDP-Based Secure and Reliable Transport for HTTP/2",
               draft-tsvwg-quic-protocol-02 (work in progress), January
               2016.
-
-
-
-
-
-
-Wing                    Expires December 15, 2016               [Page 5]
-
-Internet-Draft        Network Requirements for QUIC            June 2016
-
 
    [RFC5927]  Gont, F., "ICMP Attacks against TCP", RFC 5927, DOI
               10.17487/RFC5927, July 2010,
@@ -316,6 +330,14 @@ Internet-Draft        Network Requirements for QUIC            June 2016
               RFC 3711, DOI 10.17487/RFC3711, March 2004,
               <http://www.rfc-editor.org/info/rfc3711>.
 
+
+
+
+Wing                    Expires December 15, 2016               [Page 6]
+
+Internet-Draft        Network Requirements for QUIC            June 2016
+
+
    [RFC4787]  Audet, F., Ed. and C. Jennings, "Network Address
               Translation (NAT) Behavioral Requirements for Unicast
               UDP", BCP 127, RFC 4787, DOI 10.17487/RFC4787, January
@@ -330,13 +352,6 @@ Internet-Draft        Network Requirements for QUIC            June 2016
               "TCP Extensions for Multipath Operation with Multiple
               Addresses", RFC 6824, DOI 10.17487/RFC6824, January 2013,
               <http://www.rfc-editor.org/info/rfc6824>.
-
-
-
-Wing                    Expires December 15, 2016               [Page 6]
-
-Internet-Draft        Network Requirements for QUIC            June 2016
-
 
    [RFC7675]  Perumal, M., Wing, D., Ravindranath, R., Reddy, T., and M.
               Thomson, "Session Traversal Utilities for NAT (STUN) Usage
@@ -357,21 +372,6 @@ Author's Address
    USA
 
    Email: dwing@cisco.com
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
