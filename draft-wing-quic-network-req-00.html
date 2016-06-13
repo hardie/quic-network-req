@@ -380,12 +380,11 @@
 <link href="#rfc.section.4" rel="Chapter" title="4 QUIC Identification"/>
 <link href="#rfc.section.5" rel="Chapter" title="5 Spurious QUIC Packets"/>
 <link href="#rfc.section.6" rel="Chapter" title="6 Network State Loss"/>
-<link href="#rfc.section.7" rel="Chapter" title="7 Network Diagnostics"/>
-<link href="#rfc.section.8" rel="Chapter" title="8 Security Considerations"/>
-<link href="#rfc.section.9" rel="Chapter" title="9 IANA Considerations"/>
-<link href="#rfc.references" rel="Chapter" title="10 References"/>
-<link href="#rfc.references.1" rel="Chapter" title="10.1 Normative References"/>
-<link href="#rfc.references.2" rel="Chapter" title="10.2 Informative References"/>
+<link href="#rfc.section.7" rel="Chapter" title="7 Security Considerations"/>
+<link href="#rfc.section.8" rel="Chapter" title="8 IANA Considerations"/>
+<link href="#rfc.references" rel="Chapter" title="9 References"/>
+<link href="#rfc.references.1" rel="Chapter" title="9.1 Normative References"/>
+<link href="#rfc.references.2" rel="Chapter" title="9.2 Informative References"/>
 <link href="#rfc.authors" rel="Chapter"/>
 
 
@@ -457,12 +456,11 @@
 <li>4.   <a href="#rfc.section.4">QUIC Identification</a></li>
 <li>5.   <a href="#rfc.section.5">Spurious QUIC Packets</a></li>
 <li>6.   <a href="#rfc.section.6">Network State Loss</a></li>
-<li>7.   <a href="#rfc.section.7">Network Diagnostics</a></li>
-<li>8.   <a href="#rfc.section.8">Security Considerations</a></li>
-<li>9.   <a href="#rfc.section.9">IANA Considerations</a></li>
-<li>10.   <a href="#rfc.references">References</a></li>
-<ul><li>10.1.   <a href="#rfc.references.1">Normative References</a></li>
-<li>10.2.   <a href="#rfc.references.2">Informative References</a></li>
+<li>7.   <a href="#rfc.section.7">Security Considerations</a></li>
+<li>8.   <a href="#rfc.section.8">IANA Considerations</a></li>
+<li>9.   <a href="#rfc.references">References</a></li>
+<ul><li>9.1.   <a href="#rfc.references.1">Normative References</a></li>
+<li>9.2.   <a href="#rfc.references.2">Informative References</a></li>
 </ul><li><a href="#rfc.authors">Author's Address</a></li>
 
 
@@ -534,27 +532,26 @@
   <dd style="margin-left: 8">Recommendation: QUIC applications should honor an ICMP hard error matching the 5-tuple of the remote peer and its recently-sent Connection ID, in a fashion similar to TCP's handling of ICMP hard errors (Section 4 of <a href="#RFC5927">[RFC5927]</a>).</dd>
 </dl>
 <h1 id="rfc.section.6"><a href="#rfc.section.6">6.</a> Network State Loss</h1>
-<p id="rfc.section.6.p.1">If a firewall, NAT, or load balancer discards its mapping state without notifying the endpoint, the endpoint can take a long time to discover the network state has been lost.  To avoid this delay, it is desirable to send a signal that the network state will be lost or has been lost.</p>
+<p id="rfc.section.6.p.1">If a firewall, NAT, or load balancer discards its mapping state without notifying the endpoint, both endpoints can take a long time to discover the network state has been lost.  To avoid this delay, it is desirable to send a signal that the network state will be lost or has been lost.</p>
 <p/>
 
 <dl>
   <dt></dt>
   <dd style="margin-left: 8">Recommendation:  QUIC should provide a way for on-path middleboxes to signal that their mapping will be lost or has been lost.</dd>
 </dl>
-<h1 id="rfc.section.7"><a href="#rfc.section.7">7.</a> Network Diagnostics</h1>
-<p id="rfc.section.7.p.1">With TCP, packet loss and round-trip times can be observed by examining sequence and ACK numbers.  This is useful to diagnose where queues have formed on networks and to identify packets that were never received by a host.  Both <a href="#RFC3550">RTP</a> <cite title="NONE">[RFC3550]</cite> and Secure RTP (<a href="#RFC3711">SRTP</a> <cite title="NONE">[RFC3711]</cite>) were also designed to expose that information in their (S)RTP and (S)RTCP headers to the network to aid troubleshooting and diagnostics.</p>
+<h1 id="rfc.section.7"><a href="#rfc.section.7">7.</a> Security Considerations</h1>
+<p id="rfc.section.7.p.1">This document describes how QUIC needs to be distinguished from non-QUIC UDP traffic, so networks can defend themselves from attack and networks can defend hosts from attack.</p>
+<p id="rfc.section.7.p.2">While beyond the scope of this document, there are a few other QUIC security considerations:</p>
 <p/>
 
-<dl>
-  <dt></dt>
-  <dd style="margin-left: 8">Recommendation:  QUIC expose acknowledgement frames to the network to aid diagnosting packet loss and delay.  (It is currently unclear if QUIC will encrypt the acknowledgement frames when QUIC adopts TLS 1.3.)</dd>
-</dl>
-<h1 id="rfc.section.8"><a href="#rfc.section.8">8.</a> Security Considerations</h1>
-<p id="rfc.section.8.p.1">This document describes how QUIC needs to be distinguished from non-QUIC UDP traffic, so networks can defend themselves from attack and networks can defend hosts from attack.</p>
-<h1 id="rfc.section.9"><a href="#rfc.section.9">9.</a> IANA Considerations</h1>
-<p id="rfc.section.9.p.1">None.</p>
-<h1 id="rfc.references"><a href="#rfc.references">10.</a> References</h1>
-<h1 id="rfc.references.1"><a href="#rfc.references.1">10.1.</a> Normative References</h1>
+<ul>
+  <li>Examine impact of <a href="#CORS">CORS</a> <cite title="NONE">[CORS]</cite> to generate new UDP attacks against both clients and servers.</li>
+  <li>Due to TCP attacks, initial sequence numbers are now randomized.  QUIC should be analyzed if it would similarly benefit from randomized initial sequence numbers.</li>
+</ul>
+<h1 id="rfc.section.8"><a href="#rfc.section.8">8.</a> IANA Considerations</h1>
+<p id="rfc.section.8.p.1">None.</p>
+<h1 id="rfc.references"><a href="#rfc.references">9.</a> References</h1>
+<h1 id="rfc.references.1"><a href="#rfc.references.1">9.1.</a> Normative References</h1>
 <table>
   <tbody>
     <tr>
@@ -571,9 +568,15 @@
     </tr>
   </tbody>
 </table>
-<h1 id="rfc.references.2"><a href="#rfc.references.2">10.2.</a> Informative References</h1>
+<h1 id="rfc.references.2"><a href="#rfc.references.2">9.2.</a> Informative References</h1>
 <table>
   <tbody>
+    <tr>
+      <td class="reference">
+        <b id="CORS">[CORS]</b>
+      </td>
+      <td class="top"><a>W3C</a>, "<a href="https://www.w3.org/TR/cors">Cross-Origin Resource Sharing</a>", January 2014.</td>
+    </tr>
     <tr>
       <td class="reference">
         <b id="homeCPE">[homeCPE]</b>
@@ -597,18 +600,6 @@
         <b id="ICMPTest">[ICMPTest]</b>
       </td>
       <td class="top"><a>Pal-Erik Martinsen</a>, "<a href="https://github.com/palerikm/ICMPTest">ICMPTest</a>", March 2015.</td>
-    </tr>
-    <tr>
-      <td class="reference">
-        <b id="RFC3550">[RFC3550]</b>
-      </td>
-      <td class="top"><a>Schulzrinne, H.</a>, <a>Casner, S.</a>, <a>Frederick, R.</a> and <a>V. Jacobson</a>, "<a href="http://tools.ietf.org/html/rfc3550">RTP: A Transport Protocol for Real-Time Applications</a>", STD 64, RFC 3550, DOI 10.17487/RFC3550, July 2003.</td>
-    </tr>
-    <tr>
-      <td class="reference">
-        <b id="RFC3711">[RFC3711]</b>
-      </td>
-      <td class="top"><a>Baugher, M.</a>, <a>McGrew, D.</a>, <a>Naslund, M.</a>, <a>Carrara, E.</a> and <a>K. Norrman</a>, "<a href="http://tools.ietf.org/html/rfc3711">The Secure Real-time Transport Protocol (SRTP)</a>", RFC 3711, DOI 10.17487/RFC3711, March 2004.</td>
     </tr>
     <tr>
       <td class="reference">

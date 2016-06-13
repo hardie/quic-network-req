@@ -203,7 +203,7 @@ errors (Section 4 of
 
 <section title="Network State Loss">
 <t>If a firewall, NAT, or load balancer discards its mapping state
-without notifying the endpoint, the endpoint can take a long time to
+without notifying the endpoint, both endpoints can take a long time to
 discover the network state has been lost.  To avoid this delay, it is
 desirable to send a signal that the network state will be lost or
 has been lost.</t>
@@ -214,6 +214,7 @@ signal that their mapping will be lost or has been lost.</t>
 </list></t>
 </section>
 
+<!--
 <section title="Network Diagnostics">
 <t>With TCP, packet loss and round-trip times can be observed by
 examining sequence and ACK numbers.  This is useful to diagnose where
@@ -230,12 +231,26 @@ if QUIC will encrypt the acknowledgement frames when QUIC adopts
 TLS 1.3.)</t>
 </list></t>
 </section>
-
+-->
 
 <section title="Security Considerations">
 <t>This document describes how QUIC needs to be distinguished from
 non-QUIC UDP traffic, so networks can defend themselves from attack
 and networks can defend hosts from attack.</t>
+
+<t>While beyond the scope of this document, there are a few other
+QUIC security considerations:</t>
+
+<t><list style="symbols">
+<t>Examine impact of <xref target="CORS">CORS</xref> to generate
+new UDP attacks against both clients and servers.</t>
+
+<t>Due to TCP attacks, initial sequence numbers are now randomized.
+QUIC should be analyzed if it would similarly benefit from randomized
+initial sequence numbers.</t>
+</list></t>
+
+
 </section>
 
 
@@ -294,8 +309,13 @@ and networks can defend hosts from attack.</t>
 
     <?rfc include="reference.RFC.4787"?>
     <?rfc include="reference.RFC.5780"?>
+
+
+<!--
     <?rfc include="reference.RFC.3550"?>
     <?rfc include="reference.RFC.3711"?>
+-->
+
     <?rfc include="reference.RFC.7675"?>
     <?rfc include="reference.RFC.6824"?>
     <?rfc include="reference.I-D.hildebrand-middlebox-erosion"?>
@@ -337,6 +357,19 @@ and networks can defend hosts from attack.</t>
           <date day="7" month="November" year="2013"/>
         </front>
        </reference>
+
+      <reference anchor="CORS"
+                 target="https://www.w3.org/TR/cors">
+        <front>
+          <title>Cross-Origin Resource Sharing</title>
+          <author>
+            <organization>W3C</organization>
+          </author>
+
+          <date day="16" month="January" year="2014"/>
+        </front>
+       </reference>
+
 
     </references>
 
